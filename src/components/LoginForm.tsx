@@ -143,25 +143,24 @@ const LoginForm: React.FC = () => {
       {/* Header */}
       <div className="mb-8 text-center">
         <div
-          className="mx-auto mb-4"
-          style={{ width: "150px", height: "100px" }}
+          className="mx-auto mb-8"
+          style={{ width: "300px", height: "100px" }}
         >
           <img
-            src={logo} // Replace with your actual logo path
+            src={logo}
             alt="Company Logo"
             className="w-full h-full object-contain"
           />
         </div>
 
-        <h4 className="text-xl font-semibold text-slate-700 mb-4">
-          Login to your account
-        </h4>
-        <p className="text-slate-400 text-base">
+        <p className="text-slate-500 text-lg leading-relaxed max-w-md mx-auto">
           It's nice to see you again.
           <br />
           Ready to{" "}
           <span className="font-medium text-blue-600">fly, learn and earn</span>
           ?
+          <br />
+          <span className="font-semibold text-red-500">Login Now</span>
         </p>
       </div>
 

@@ -82,7 +82,7 @@ const LoginBrandingSection = () => {
           </div>
 
           {/* Trust Indicators */}
-          <div className="pt-8">
+          {/* <div className="pt-8">
             <p className="text-sm text-slate-400 mb-3">
               Trusted by professionals worldwide
             </p>
@@ -100,7 +100,7 @@ const LoginBrandingSection = () => {
                 <span className="text-sm text-slate-500">95% Success Rate</span>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
