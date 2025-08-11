@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/gmi_logo.png";
+import { getApi } from "@/api/api";
 // import SocialLoginButtons from "./SocialLoginButtons";
 
 interface FormData {
@@ -86,13 +87,11 @@ const LoginForm: React.FC = () => {
 
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/v1/users/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+        const { data } = await getApi().post("/v1/users/login", {
+          email,
+          password,
         });
 
-        const data = await res.json();
         console.log(data);
 
         if (data.success && data.user) {
