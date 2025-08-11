@@ -124,6 +124,12 @@ const LoginForm: React.FC = () => {
         }
       } catch (err) {
         console.error("Login failed", err);
+        toast({
+          title: "Login failed",
+          description:
+            err.response?.data?.message || err.message || "Please try again.",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
