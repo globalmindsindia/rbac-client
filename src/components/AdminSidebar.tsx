@@ -25,7 +25,7 @@ const sections = [
   {
     label: "Main",
     items: [
-      { title: "Dashboard", url: "/admin", icon: Home },
+      { title: "Dashboard", url: "/admin/dashboard", icon: Home },
       { title: "Users", url: "/admin/users", icon: Users },
       { title: "Roles", url: "/admin/roles", icon: Shield },
       { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
@@ -45,16 +45,6 @@ const sections = [
   },
 ];
 
-// Utility to apply classes based on active status
-const getLinkClass = (isActive: boolean) =>
-  isActive
-    ? "bg-blue-600 text-white font-medium rounded-md"
-    : "hover:bg-blue-100 text-gray-700 hover:text-blue-800 rounded-md";
-
-// Utility to apply icon color separately
-const getIconClass = (isActive: boolean) =>
-  isActive ? "text-white" : "text-blue-500";
-
 export function AdminSidebar() {
   const { open } = useSidebar();
 
@@ -69,16 +59,23 @@ export function AdminSidebar() {
                 {section.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        className={({ isActive }) =>
-                          `${getLinkClass(
-                            isActive
-                          )} flex items-center gap-3 px-4 py-2 w-full transition-colors`
-                        }
-                      >
-                        <item.icon className={`h-4 w-4 ${getIconClass}`} />
-                        {open && <span>{item.title}</span>}
+                      <NavLink to={item.url}>
+                        {({ isActive }) => (
+                          <div
+                            className={`${
+                              isActive
+                                ? "bg-blue-600 text-white font-medium rounded-md"
+                                : "hover:bg-blue-100 text-gray-700 hover:text-blue-800 rounded-md"
+                            } flex items-center gap-3 px-4 py-2 w-full transition-colors`}
+                          >
+                            <item.icon
+                              className={`h-4 w-4 ${
+                                isActive ? "text-white" : "text-blue-500"
+                              }`}
+                            />
+                            {open && <span>{item.title}</span>}
+                          </div>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
