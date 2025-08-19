@@ -87,23 +87,36 @@ const LoginForm: React.FC = () => {
 
       setLoading(true);
       try {
-        const { data } = await getApi().post("/v1/users/login", {
-          email,
-          password,
-        });
+        const { data } = await getApi().post(
+          "/v1/users/login",
+          {
+            email,
+            password,
+          },
+          { withCredentials: true }
+        );
 
-        console.log(data);
+        if (data.accessToken) {
+          getApi().defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${data.accessToken}`;
+        }
 
         if (data.success && data.user) {
           const { app, apps, redirect, chooseApp } = data;
+          // console.log("Login response:", data);
 
-          if (app && app.role === "Super Admin") {
-            login(data.user);
-            sessionStorage.setItem("appOptions", JSON.stringify(apps));
-            navigate("/admin/dashboard");
-          } else if (redirect && app) {
+          if (redirect && app) {
+            login(data.user); // ✅ mark user as logged in
             setSelectedApp(app);
-            window.location.href = redirect;
+            // console.log("Redirecting to:", redirect);
+
+            if (redirect.startsWith("/")) {
+              // console.log("Internal route detected");
+              navigate(redirect); // React Router
+            } else {
+              window.location.href = redirect; // External
+            }
           } else if (chooseApp && apps) {
             login(data.user);
             sessionStorage.setItem("appOptions", JSON.stringify(apps));

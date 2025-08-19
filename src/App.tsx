@@ -10,6 +10,8 @@ import AppSelector from "./pages/AppSelector";
 import { AuthProvider } from "./auth/AuthContext";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ForgotPasswordForm from "./pages/ForgotPasswordForm";
+import RolesManagement from "./pages/admin/RolesManagement";
+import ApplicationManagement from "./pages/admin/ApplicationManagement";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/roles-management"
+              element={
+                <ProtectedRoute>
+                  <RolesManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/application-management"
+              element={
+                <ProtectedRoute>
+                  <ApplicationManagement />
                 </ProtectedRoute>
               }
             />

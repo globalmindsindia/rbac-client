@@ -61,6 +61,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { AdminSidebar } from "@/components/AdminSidebar";
+import StatsCard from "@/components/StatsCard";
 
 // Mock data - Replace with your backend integration
 const mockUsers = [
@@ -267,65 +268,33 @@ const AdminDashboard = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Total Users
-                      </p>
-                      <p className="text-2xl font-bold">{users.length}</p>
-                    </div>
-                    <Users className="h-8 w-8 text-primary" />
-                  </div>
-                </CardContent>
-              </Card>
+              <StatsCard
+                label="Total Users"
+                value={users.length}
+                icon={Users}
+                iconColor="text-primary"
+              />
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Active Users
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {users.filter((u) => u.status === "active").length}
-                      </p>
-                    </div>
-                    <Users className="h-8 w-8 text-success" />
-                  </div>
-                </CardContent>
-              </Card>
+              <StatsCard
+                label="Active Users"
+                value={users.filter((u) => u.status === "active").length}
+                icon={Users}
+                iconColor="text-success"
+              />
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Total Roles
-                      </p>
-                      <p className="text-2xl font-bold">{roles.length}</p>
-                    </div>
-                    <Shield className="h-8 w-8 text-primary" />
-                  </div>
-                </CardContent>
-              </Card>
+              <StatsCard
+                label="Total Roles"
+                value={roles.length}
+                icon={Shield}
+                iconColor="text-primary"
+              />
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Pending Users
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {users.filter((u) => u.status === "pending").length}
-                      </p>
-                    </div>
-                    <UserPlus className="h-8 w-8 text-warning" />
-                  </div>
-                </CardContent>
-              </Card>
+              <StatsCard
+                label="Pending Users"
+                value={users.filter((u) => u.status === "pending").length}
+                icon={UserPlus}
+                iconColor="text-warning"
+              />
             </div>
 
             {/* Navigation Tabs */}

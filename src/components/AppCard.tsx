@@ -36,7 +36,7 @@ const AppCard = ({
   };
 
   const handleOpenApp = () => {
-    console.log(`Opening app: ${name}`);
+    // console.log(`Opening app: ${name}`);
     if (onClick) {
       onClick(); // ✅ Trigger passed onClick from AppSelector
     }
@@ -44,7 +44,7 @@ const AppCard = ({
   };
 
   const handleManageApp = () => {
-    console.log(`Managing app: ${name}`);
+    // console.log(`Managing app: ${name}`);
     // Navigate to app settings logic here
   };
 

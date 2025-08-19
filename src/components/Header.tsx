@@ -3,15 +3,21 @@ import { LogOut } from "lucide-react";
 import companyLogo from "@/assets/gmi_logo.png";
 import { useAuth } from "@/auth/auth";
 import { useNavigate } from "react-router-dom";
+import { getApi } from "@/api/api";
 
 const Header = () => {
   const { logout } = useAuth(); // ✅ use it here (top-level)
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout(); // ✅ Now safe to use
-    console.log("User logged out");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await getApi().post("/v1/users/logout", {}, { withCredentials: true });
+      logout(); // clear frontend state
+      // console.log("User logged out");
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (

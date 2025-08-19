@@ -26,23 +26,27 @@ const sections = [
     label: "Main",
     items: [
       { title: "Dashboard", url: "/admin/dashboard", icon: Home },
-      { title: "Users", url: "/admin/users", icon: Users },
-      { title: "Roles", url: "/admin/roles", icon: Shield },
-      { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
+      // { title: "Users", url: "/admin/users", icon: Users },
+      { title: "Roles", url: "/admin/roles-management", icon: Shield },
+      {
+        title: "Applications",
+        url: "/admin/application-management",
+        icon: BarChart3,
+      },
     ],
   },
-  {
-    label: "Management",
-    items: [
-      { title: "Settings", url: "/admin/settings", icon: Settings },
-      { title: "Email Templates", url: "/admin/email-templates", icon: Mail },
-      { title: "Audit Logs", url: "/admin/audit-logs", icon: FileText },
-    ],
-  },
-  {
-    label: "Support",
-    items: [{ title: "Help Center", url: "/admin/help", icon: HelpCircle }],
-  },
+  // {
+  //   label: "Management",
+  //   items: [
+  //     { title: "Settings", url: "/admin/settings", icon: Settings },
+  //     { title: "Email Templates", url: "/admin/email-templates", icon: Mail },
+  //     { title: "Audit Logs", url: "/admin/audit-logs", icon: FileText },
+  //   ],
+  // },
+  // {
+  //   label: "Support",
+  //   items: [{ title: "Help Center", url: "/admin/help", icon: HelpCircle }],
+  // },
 ];
 
 export function AdminSidebar() {
