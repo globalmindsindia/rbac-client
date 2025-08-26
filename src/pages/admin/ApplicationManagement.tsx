@@ -2,7 +2,9 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import Footer from "@/components/Footer";
 import ApplicationForm from "@/components/forms/ApplicationForm";
 import Header from "@/components/Header";
+import ApplicationTable from "@/components/tables/ApplicationTable";
 import { Button } from "@/components/ui/button";
+import Swal from "sweetalert2";
 import {
   SidebarInset,
   SidebarProvider,
@@ -32,6 +34,57 @@ const ApplicationManagement = () => {
   const handleUpsert = async (data: any) => {
     await applicationService.upsertApplication(data);
     fetchApplications(); // refresh table
+  };
+
+  const handleDelete = async (id: string) => {
+    const result = await Swal.fire({
+      title: "Delete Application?",
+      text: "This action will mark the application as deleted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      // Soft delete
+      await applicationService.deleteApplication(id);
+      fetchApplications();
+
+      // Undo option
+      Swal.fire({
+        title: "Application deleted",
+        text: "You can undo this action within 5 seconds.",
+        icon: "success",
+        showCancelButton: true,
+        confirmButtonText: "Undo",
+        cancelButtonText: "Dismiss",
+        timer: 5000,
+        timerProgressBar: true,
+      }).then(async (undoResult) => {
+        if (undoResult.isConfirmed) {
+          try {
+            await applicationService.restoreApplication(id);
+            fetchApplications();
+            Swal.fire(
+              "Restored!",
+              "The application has been restored.",
+              "success"
+            );
+          } catch (err) {
+            console.error("Failed to restore application:", err);
+            Swal.fire("Error", "Could not restore the application.", "error");
+          }
+        } else {
+          console.log("Application deletion finalized");
+        }
+      });
+    } catch (error) {
+      console.error("Failed to delete application:", error);
+      Swal.fire("Error", "Could not delete application.", "error");
+    }
   };
 
   return (
@@ -66,8 +119,14 @@ const ApplicationManagement = () => {
               />
             </div>
 
+            <ApplicationTable
+              applications={applications}
+              handleUpsert={handleUpsert}
+              handleDelete={handleDelete}
+            />
+
             {/* Applications Table */}
-            <div className="overflow-x-auto border rounded-lg">
+            {/* <div className="overflow-x-auto border rounded-lg">
               <table className="min-w-full border-collapse">
                 <thead className="bg-gray-100">
                   <tr>
@@ -120,7 +179,7 @@ const ApplicationManagement = () => {
                   )}
                 </tbody>
               </table>
-            </div>
+            </div> */}
           </main>
 
           <Footer />

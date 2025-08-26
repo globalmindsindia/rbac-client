@@ -20,7 +20,12 @@ export const applicationService = {
   },
 
   async deleteApplication(id: string) {
-    const { data } = await getApi().delete(`/v1/applications/${id}`);
+    const { data } = await getApi().delete(`/v1/admin/applications/${id}`);
+    return data;
+  },
+
+  async restoreApplication(id: string) {
+    const { data } = await getApi().put(`/v1/admin/applications/${id}/restore`);
     return data;
   },
 };

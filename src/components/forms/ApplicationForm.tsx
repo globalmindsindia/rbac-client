@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 
 interface ApplicationFormProps {
   mode: "add" | "edit";
@@ -34,6 +34,7 @@ const ApplicationForm = ({
   trigger,
   onSubmit,
 }: ApplicationFormProps) => {
+  const [open, setOpen] = useState(false); // control dialog state
   const applicationForm = useForm({
     defaultValues: {
       name: "",
@@ -61,6 +62,7 @@ const ApplicationForm = ({
             : "Application updated successfully",
       });
       applicationForm.reset();
+      setOpen(false); // ✅ close modal after success
     } catch (error) {
       toast({
         title: "Error",
@@ -74,7 +76,7 @@ const ApplicationForm = ({
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
