@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/services/authService";
 
 /* ──────────────────────────────────────────
    Re-use the same base styles you defined
@@ -47,15 +48,7 @@ const ForgotPasswordForm: React.FC = () => {
 
     try {
       /* Call your API */
-      const res = await fetch(
-        "http://localhost:5000/v1/users/forgot-password",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
-      const data = await res.json();
+      const data = await authService.forgotPassword(email);
 
       if (data.success) {
         toast({

@@ -12,6 +12,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import ForgotPasswordForm from "./pages/ForgotPasswordForm";
 import RolesManagement from "./pages/admin/RolesManagement";
 import ApplicationManagement from "./pages/admin/ApplicationManagement";
+import ResetPasswordForm from "./pages/ResetPasswordForm";
+import ErrorPage from "./pages/ErrorPage";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+            <Route path="/reset-password" element={<ResetPasswordForm />} />
+            <Route path="/error" element={<ErrorPage />} />
             <Route
               path="/choose-app"
               element={
