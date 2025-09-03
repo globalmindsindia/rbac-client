@@ -262,9 +262,15 @@ const LoginForm: React.FC = () => {
             disabled={loading}
             onClick={() => {
               setLoading(true);
-              // Redirect user to your backend endpoint that initiates Zoho OAuth
-              window.location.href =
-                "http://localhost:5080/v1/users/auth/zoho/oauth";
+              const apiBaseUrl = (window as any)._env_?.API_BASE_URL;
+              if (!apiBaseUrl) {
+                console.error("API_BASE_URL not found in config.json");
+                setLoading(false);
+                return;
+              }
+
+              // Redirect user to backend Zoho OAuth endpoint
+              window.location.href = `${apiBaseUrl}/v1/users/auth/zoho/oauth`;
             }}
             className={`w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-orange-400 ${
               loading ? "opacity-60 cursor-not-allowed" : ""
