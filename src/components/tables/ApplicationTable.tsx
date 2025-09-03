@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button";
 import ApplicationForm from "../forms/ApplicationForm";
 import { GlobalDataTable } from "../common/DataTable";
 
-const ApplicationTable = ({ applications, handleUpsert, handleDelete }) => {
+const ApplicationTable = ({
+  applications,
+  roles,
+  handleUpsert,
+  handleDelete,
+}) => {
   const columns = [
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Domain", selector: (row) => row.domain_url, sortable: true },
@@ -24,6 +29,7 @@ const ApplicationTable = ({ applications, handleUpsert, handleDelete }) => {
           {/* Edit button */}
           <ApplicationForm
             mode="edit"
+            roles={roles}
             initialData={row}
             onSubmit={handleUpsert}
             trigger={

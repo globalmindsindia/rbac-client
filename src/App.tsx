@@ -14,16 +14,37 @@ import RolesManagement from "./pages/admin/RolesManagement";
 import ApplicationManagement from "./pages/admin/ApplicationManagement";
 import ResetPasswordForm from "./pages/ResetPasswordForm";
 import ErrorPage from "./pages/ErrorPage";
+import EmployeeDashboard from "./pages/admin/employee/EmployeeDashboard";
+import OAuthCallback from "./components/OAuthCallback";
 
 const queryClient = new QueryClient();
 
+// Protects private routes
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { isAuthenticated, loading } = useAuth();
-  if (loading) {
-    return <div>Loading...</div>; // Or a spinner component
-  }
+  if (loading) return <div>Loading...</div>;
 
   return isAuthenticated ? children : <Navigate to="/" />;
+};
+
+// Handles root "/" route
+const RootRedirect = () => {
+  const { isAuthenticated, selectedApp, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+
+  if (!isAuthenticated) return <Login />;
+
+  // User is logged in → redirect based on app/role
+  if (selectedApp?.role.toLowerCase().includes("admin")) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  if (selectedApp?.role.toLowerCase().includes("employee")) {
+    return <Navigate to="/employee/dashboard" replace />;
+  }
+
+  // Default fallback → App selector
+  return <Navigate to="/choose-app" replace />;
 };
 
 const App = () => (
@@ -34,9 +55,10 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<RootRedirect />} />
             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
             <Route path="/reset-password" element={<ResetPasswordForm />} />
+            <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/error" element={<ErrorPage />} />
             <Route
               path="/choose-app"
@@ -51,6 +73,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/employee/dashboard"
+              element={
+                <ProtectedRoute>
+                  <EmployeeDashboard />
                 </ProtectedRoute>
               }
             />
@@ -70,7 +100,6 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

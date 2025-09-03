@@ -16,12 +16,14 @@ import React, { useEffect, useState } from "react";
 
 const ApplicationManagement = () => {
   const [applications, setApplications] = useState<any[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
 
   // Fetch applications from backend
   const fetchApplications = async () => {
     try {
-      const data = await applicationService.getApplications(); // ← Make sure this calls GET /applications
-      setApplications(data);
+      const data = await applicationService.getApplications();
+      setApplications(data.applications || []);
+      setRoles(data.roles || []);
     } catch (error) {
       console.error("Failed to load applications:", error);
     }
@@ -109,6 +111,7 @@ const ApplicationManagement = () => {
               {/* Add Application Button */}
               <ApplicationForm
                 mode="add"
+                roles={roles}
                 onSubmit={handleUpsert}
                 trigger={
                   <Button size="sm" className="flex items-center gap-2">
@@ -120,6 +123,7 @@ const ApplicationManagement = () => {
             </div>
 
             <ApplicationTable
+              roles={roles}
               applications={applications}
               handleUpsert={handleUpsert}
               handleDelete={handleDelete}

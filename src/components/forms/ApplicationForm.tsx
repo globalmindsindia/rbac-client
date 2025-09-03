@@ -20,16 +20,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "../ui/checkbox";
 
 interface ApplicationFormProps {
   mode: "add" | "edit";
-  initialData?: { name: string; domain_url: string };
+  initialData?: { name: string; domain_url: string; roles: string[] }; // Pre-fill data for edit mode
+  roles: { id: string; name: string }[];
   trigger: React.ReactNode; // Button or Icon
   onSubmit: (data: { name: string; domain_url: string }) => Promise<void>;
 }
 
 const ApplicationForm = ({
   mode,
+  roles,
   initialData,
   trigger,
   onSubmit,
@@ -39,6 +42,7 @@ const ApplicationForm = ({
     defaultValues: {
       name: "",
       domain_url: "",
+      roles: [],
     },
   });
 
@@ -117,6 +121,43 @@ const ApplicationForm = ({
                   <FormLabel>Domain URL</FormLabel>
                   <FormControl>
                     <Input placeholder="https://example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={applicationForm.control}
+              name="roles"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assign Roles</FormLabel>
+                  <FormControl>
+                    <div className="space-y-2">
+                      {roles.map((role) => (
+                        <label
+                          key={role.id}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            checked={field.value.includes(role.name)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                field.onChange([...field.value, role.name]);
+                              } else {
+                                field.onChange(
+                                  field.value.filter(
+                                    (id: string) => id !== role.name
+                                  )
+                                );
+                              }
+                            }}
+                          />
+                          <span>{role.name}</span>
+                        </label>
+                      ))}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
