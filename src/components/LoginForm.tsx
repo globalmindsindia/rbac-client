@@ -5,6 +5,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/gmi_logo.png";
 import { getApi } from "@/api/api";
+import { startZohoLogin } from "@/utils/zoho";
 // import SocialLoginButtons from "./SocialLoginButtons";
 
 interface FormData {
@@ -262,15 +263,7 @@ const LoginForm: React.FC = () => {
             disabled={loading}
             onClick={() => {
               setLoading(true);
-              const apiBaseUrl = (window as any)._env_?.API_BASE_URL;
-              if (!apiBaseUrl) {
-                console.error("API_BASE_URL not found in config.json");
-                setLoading(false);
-                return;
-              }
-
-              // Redirect user to backend Zoho OAuth endpoint
-              window.location.href = `${apiBaseUrl}/v1/users/auth/zoho/oauth`;
+              startZohoLogin(formData.email.trim().toLowerCase());
             }}
             className={`w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-orange-400 ${
               loading ? "opacity-60 cursor-not-allowed" : ""
