@@ -7,6 +7,8 @@ import {
   Mail,
   FileText,
   HelpCircle,
+  BookOpen,
+  ShoppingCart,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -25,17 +27,12 @@ export const menuConfig: MenuSection[] = [
   {
     label: "Main",
     items: [
+      // admin menu
       {
         title: "Dashboard",
         url: "/admin/dashboard",
         icon: Home,
         roles: ["Super Admin", "Admin"],
-      },
-      {
-        title: "Dashboard",
-        url: "/employee/dashboard",
-        icon: Home,
-        roles: ["Employee"],
       },
       {
         title: "Roles",
@@ -48,6 +45,34 @@ export const menuConfig: MenuSection[] = [
         url: "/admin/application-management",
         icon: BarChart3,
         roles: ["Super Admin"],
+      },
+
+      // employee menu
+      {
+        title: "Dashboard",
+        url: "/employee/dashboard",
+        icon: Home,
+        roles: ["Employee"],
+      },
+
+      // student menu
+      {
+        title: "Dashboard",
+        url: "/student/dashboard",
+        icon: Home,
+        roles: ["Student"],
+      },
+      {
+        title: "My Services",
+        url: "/student/services",
+        icon: BookOpen,
+        roles: ["Student"],
+      },
+      {
+        title: "Other Services",
+        url: "/student/available-services",
+        icon: ShoppingCart,
+        roles: ["Student"],
       },
     ],
   },

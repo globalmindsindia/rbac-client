@@ -1,11 +1,13 @@
 import { useAuth } from "@/auth/auth";
 import { useToast } from "@/hooks/use-toast";
-import React, { useEffect, useState } from "react";
+import debounce from "lodash.debounce";
+import React, { useCallback, useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/gmi_logo.png";
 import { getApi } from "@/api/api";
 import { startZohoLogin } from "@/utils/zoho";
+import { authService } from "@/services/authService";
 // import SocialLoginButtons from "./SocialLoginButtons";
 
 interface FormData {
@@ -17,6 +19,11 @@ interface FormData {
 interface FormErrors {
   email?: string;
   password?: string;
+}
+
+interface CheckEmailResp {
+  exists: boolean;
+  hasPassword: boolean;
 }
 
 // Base input styles for light theme
@@ -39,6 +46,7 @@ const LoginForm: React.FC = () => {
     password: "",
     rememberMe: false,
   });
+  const [showOTP, setShowOTP] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [isZohoUser, setIsZohoUser] = useState(false);
@@ -48,8 +56,28 @@ const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const checkEmail = useCallback(
+    debounce(async (email: string) => {
+      try {
+        const { data } = await getApi().get<CheckEmailResp>(
+          "/v1/users/check-email",
+          { params: { email } }
+        );
+        setShowOTP(data.exists && !data.hasPassword);
+      } catch {
+        toast({
+          title: "Error",
+          description: "Could not verify email",
+          variant: "destructive",
+        });
+      }
+    }, 500),
+    [toast]
+  );
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -60,9 +88,26 @@ const LoginForm: React.FC = () => {
     }
 
     if (name === "email") {
-      setIsZohoUser(
-        value.trim().toLowerCase().endsWith("@globalmindsindia.com")
-      );
+      const email = value.trim().toLowerCase();
+
+      // Reset states when email box is empty
+      if (!email) {
+        setIsZohoUser(false);
+        setShowOTP(false);
+        return;
+      }
+
+      // Check if Zoho domain
+      setIsZohoUser(email.endsWith("@globalmindsindia.com"));
+
+      // Only call backend if email looks valid
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(email)) {
+        checkEmail(email);
+      } else {
+        // Invalid format → reset states
+        setShowOTP(false);
+      }
     }
   };
 
@@ -112,7 +157,7 @@ const LoginForm: React.FC = () => {
           // ✅ Pass the whole payload to login
           login(data);
 
-          const { app, redirect, chooseApp, apps } = data;
+          const { app, redirect } = data;
 
           if (redirect && app) {
             if (redirect.startsWith("/")) {
@@ -120,9 +165,6 @@ const LoginForm: React.FC = () => {
             } else {
               window.location.href = redirect;
             }
-          } else if (chooseApp && apps) {
-            sessionStorage.setItem("appOptions", JSON.stringify(apps));
-            navigate("/choose-app");
           } else {
             toast({
               title: "Login failed",
@@ -217,7 +259,7 @@ const LoginForm: React.FC = () => {
         </div>
 
         {/* Password & Remember Me: only for non-Zoho users */}
-        {!isZohoUser && (
+        {!isZohoUser && !showOTP && (
           <>
             <div>
               <input
@@ -256,8 +298,54 @@ const LoginForm: React.FC = () => {
           </>
         )}
 
+        {showOTP && !isZohoUser && (
+          <button
+            type="button"
+            disabled={loading}
+            onClick={async () => {
+              setLoading(true);
+              try {
+                const email = formData.email.trim().toLowerCase();
+
+                const data = await authService.requestOtp(email);
+
+                if (data.success) {
+                  toast({
+                    title: "OTP sent",
+                    description: "Check your email",
+                    variant: "default",
+                  });
+                  navigate(`/otp?email=${encodeURIComponent(email)}`);
+                } else {
+                  toast({
+                    title: "Error",
+                    description: data.message || "Could not send OTP",
+                    variant: "destructive",
+                  });
+                }
+              } catch (err: any) {
+                toast({
+                  title: "Error",
+                  description:
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Could not send OTP",
+                  variant: "destructive",
+                });
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className={`w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-yellow-400 ${
+              loading ? "opacity-60 cursor-not-allowed" : ""
+            }`}
+          >
+            {loading ? "Sending OTP..." : "Login with OTP"}
+          </button>
+        )}
+
         {/* Submit / OAuth Button */}
-        {isZohoUser ? (
+        {isZohoUser && (
           <button
             type="button"
             disabled={loading}
@@ -271,7 +359,10 @@ const LoginForm: React.FC = () => {
           >
             {loading ? "Redirecting to Zoho..." : "Login with Zoho"}
           </button>
-        ) : (
+        )}
+
+        {/* Normal Submit (only if not Zoho user and no OTP) */}
+        {!isZohoUser && !showOTP && (
           <button
             type="submit"
             disabled={loading}

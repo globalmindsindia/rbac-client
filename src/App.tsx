@@ -16,6 +16,9 @@ import ResetPasswordForm from "./pages/ResetPasswordForm";
 import ErrorPage from "./pages/ErrorPage";
 import EmployeeDashboard from "./pages/admin/employee/EmployeeDashboard";
 import OAuthCallback from "./components/OAuthCallback";
+import StudentDashboard from "./pages/student/StudentDashboard";
+import OtpForm from "./components/forms/OtpForm";
+import { OtpWrapper } from "./pages/OtpWrapper";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +63,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPasswordForm />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/error" element={<ErrorPage />} />
+            <Route path="/otp" element={<OtpWrapper />} />
             <Route
               path="/choose-app"
               element={
@@ -81,6 +85,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <EmployeeDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/dashboard"
+              element={
+                <ProtectedRoute>
+                  <StudentDashboard />
                 </ProtectedRoute>
               }
             />

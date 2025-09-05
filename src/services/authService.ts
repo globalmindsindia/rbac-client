@@ -13,12 +13,11 @@ export const authService = {
     newPassword: string,
     confirmPassword: string
   ) {
-    const { data } = await getApi().post("/v1/auth//password-reset", {
+    const { data } = await getApi().post("/v1/auth/password-reset", {
       token,
       newPassword,
       confirmPassword,
     });
-
     return data;
   },
 
@@ -26,6 +25,31 @@ export const authService = {
     const { data } = await getApi().get("/v1/auth/verify-reset-token", {
       params: { token },
     });
+    return data;
+  },
+
+  // Request a new OTP for the given email
+  async requestOtp(email: string) {
+    const { data } = await getApi().post("/v1/users/otp/request", { email });
+    return data;
+  },
+
+  // Verify the OTP + email combination
+  async verifyOtp(email: string, otp: string) {
+    const { data } = await getApi().get("/v1/users/otp/verify", {
+      params: { email, code: otp },
+    });
+    return data;
+  },
+
+  // Resend OTP for the given email
+  async resendOtp(email: string) {
+    const { data } = await getApi().post("/v1/users/otp/request", { email });
+    return data;
+  },
+
+  async loginWithOtp(email: string) {
+    const { data } = await getApi().post("/v1/users/login-with-otp", { email });
     return data;
   },
 };
