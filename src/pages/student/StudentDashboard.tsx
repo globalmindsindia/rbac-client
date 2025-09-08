@@ -99,11 +99,7 @@ const StudentDashboard = () => {
         {/* Services Tabs */}
         <div className="mt-6">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="my-services">My Services</TabsTrigger>
-              <TabsTrigger value="other-services">Other Services</TabsTrigger>
-            </TabsList>
+ 
             <TabsContent value="overview" className="mt-6">
               {/* Overview content can be added here if needed */}
             </TabsContent>
