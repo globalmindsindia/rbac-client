@@ -1,5 +1,8 @@
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Bell, Settings } from "lucide-react";
+import { Button } from "../ui/button";
+
 interface DashboardHeaderProps {
   studentName: string;
   notifications: number;
@@ -18,12 +21,12 @@ const StudentDashboardHeader = ({
       : "Good Evening";
 
   return (
-    <header className="bg-gradient-card shadow-soft rounded-xl p-6 mb-8 animate-fade-in">
+    <header className="bg-white border border-gray-100 rounded-lg p-4 mb-6 shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 ring-4 ring-primary/20">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12">
             <AvatarImage src="" alt={studentName} />
-            <AvatarFallback className="bg-gradient-primary text-primary-foreground text-lg font-semibold">
+            <AvatarFallback className="bg-blue-500 text-white text-sm font-medium">
               {studentName
                 .split(" ")
                 .map((n) => n[0])
@@ -32,13 +35,27 @@ const StudentDashboardHeader = ({
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-xl font-semibold text-gray-900">
               {greeting}, {studentName}!
             </h1>
-            <p className="text-muted-foreground">
-              Welcome to Global Minds India Student Dashboard
+            <p className="text-sm text-gray-600">
+              Global Minds India Student Portal
             </p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" className="relative">
+            <Bell className="h-4 w-4" />
+            {notifications > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {notifications}
+              </span>
+            )}
+          </Button>
+          <Button variant="ghost" size="sm">
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </header>
