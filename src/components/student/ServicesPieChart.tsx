@@ -12,7 +12,8 @@ interface ServiceData {
   icon: string;
 }
 
-const ServicesPieChart = ({ studentName }: { studentName: string }) => {
+
+const ServicesPieChart = ({ studentName, onTabChange }: { studentName: string; onTabChange?: (tab: string) => void }) => {
   const navigate = useNavigate();
   const [hoveredService, setHoveredService] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -84,12 +85,28 @@ const ServicesPieChart = ({ studentName }: { studentName: string }) => {
   ];
 
   const handleServiceClick = (service: ServiceData) => {
-    if (!service.purchased) {
-      navigate("/available-services");
+    console.log("ServicesPieChart: handleServiceClick called", { service: service.name, purchased: service.purchased, onTabChange: !!onTabChange });
+    if (onTabChange) {
+      if (!service.purchased) {
+        console.log("ServicesPieChart: calling onTabChange with 'other-services'");
+        onTabChange("other-services");
+      } else {
+        console.log("ServicesPieChart: calling onTabChange with 'my-services'");
+        onTabChange("my-services");
+      }
     } else {
-      navigate("/services");
+      console.log("ServicesPieChart: onTabChange not provided, using navigate");
+      if (!service.purchased) {
+        navigate("/services?tab=other-services");
+      } else {
+        navigate("/services?tab=my-services");
+      }
     }
   };
+
+  useEffect(() => {
+    console.log("ServicesPieChart: hoveredService changed to", hoveredService);
+  }, [hoveredService]);
 
   const handleServiceHover = (serviceName: string | null) => {
     setHoveredService(serviceName);
@@ -267,7 +284,11 @@ const ServicesPieChart = ({ studentName }: { studentName: string }) => {
                       }}
                       onMouseEnter={() => handleServiceHover(service.name)}
                       onMouseLeave={() => handleServiceHover(null)}
-                      onClick={() => handleServiceClick(service)}
+                      onClick={(e) => {
+                        console.log("ServicesPieChart: SVG path clicked for", service.name);
+                        e.stopPropagation();
+                        handleServiceClick(service);
+                      }}
                     />
 
                     {/* Service icon positioned at top */}
@@ -358,7 +379,11 @@ const ServicesPieChart = ({ studentName }: { studentName: string }) => {
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-medium shadow-xl animate-bounce whitespace-nowrap"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate("/available-services");
+                        if (onTabChange) {
+                          onTabChange("other-services");
+                        } else {
+                          navigate("/services?tab=other-services");
+                        }
                       }}
                     >
                       🛒 Buy {hoveredService}
@@ -379,7 +404,11 @@ const ServicesPieChart = ({ studentName }: { studentName: string }) => {
                   ? "hover:bg-green-50 hover:border-green-200 border border-transparent"
                   : "hover:bg-primary/5 hover:border-primary/20 border border-transparent"
               }`}
-              onClick={() => handleServiceClick(service)}
+              onClick={(e) => {
+                console.log("ServicesPieChart: Legend item clicked for", service.name);
+                e.stopPropagation();
+                handleServiceClick(service);
+              }}
               onMouseEnter={() => handleServiceHover(service.name)}
               onMouseLeave={() => handleServiceHover(null)}
             >
@@ -414,7 +443,11 @@ const ServicesPieChart = ({ studentName }: { studentName: string }) => {
                       className="text-xs px-2 py-1 h-6 bg-green-600 hover:bg-green-700"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate("/services");
+                        if (onTabChange) {
+                          onTabChange("my-services");
+                        } else {
+                          navigate("/services?tab=my-services");
+                        }
                       }}
                     >
                       Access
@@ -432,7 +465,11 @@ const ServicesPieChart = ({ studentName }: { studentName: string }) => {
                       className="text-xs px-2 py-1 h-6"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate("/available-services");
+                        if (onTabChange) {
+                          onTabChange("other-services");
+                        } else {
+                          navigate("/services?tab=other-services");
+                        }
                       }}
                     >
                       Buy

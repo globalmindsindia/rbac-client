@@ -49,11 +49,17 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-foreground mb-3">Contact</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>support@company.com</li>
-              <li>+1 (555) 123-4567</li>
-              <li>123 Business Ave</li>
-              <li>Tech City, TC 12345</li>
+              <li><strong>Corporate Office - India</strong></li>
+              <li>23, CJ VenkataDas road,</li>
+              <li>Padmanabhanagar, Bangalore</li>
+              <li>+91 7353446655</li>
+              <li>connect@globalmindsindia.com</li>
+
+              <li className="pt-4"><strong>Overseas Office - Germany</strong></li>
+              <li>Koenigsheideweg Berlin, Germany</li>
+              <li>+49 17645728219</li>
             </ul>
+
           </div>
         </div>
 

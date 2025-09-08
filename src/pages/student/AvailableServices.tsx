@@ -1,7 +1,8 @@
 import CrossSellSection from "@/components/student/CrossSellSection";
-
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 const AvailableServices = () => {
   return (
+    <DashboardLayout>
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
@@ -15,6 +16,7 @@ const AvailableServices = () => {
         <CrossSellSection />
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 
