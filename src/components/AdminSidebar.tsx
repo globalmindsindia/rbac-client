@@ -12,6 +12,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { menuConfig } from "@/config/menuConfig";
+import companyLogo from "@/assets/gmi_logo.png";
 
 export function AdminSidebar() {
   const { open } = useSidebar();
@@ -21,6 +22,14 @@ export function AdminSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
+        <div className="p-0 flex flex-col items-center -mt-0.5">
+          <img
+            src={companyLogo}
+            alt="Company Logo"
+            className={`mx-auto ${open ? "w-52" : "w-24"} h-auto transition-all duration-300`}
+          />
+          <hr className="border-t border-border w-full mt-2" />
+        </div>
         {menuConfig.map((section) => {
           // Filter items based on role
           const filteredItems = section.items.filter(

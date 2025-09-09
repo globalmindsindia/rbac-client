@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { useAuth } from "@/auth/AuthContext";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import ServicesPieChart from "@/components/student/ServicesPieChart";
-import RecentActivities from "@/components/student/RecentActivities";
 import CrossSellSection from "@/components/student/CrossSellSection";
 import PurchasedServices from "@/components/student/PurchasedServices";
 import { Card } from "@/components/ui/card";
@@ -31,10 +30,10 @@ const StudentDashboard = () => {
   return (
     <DashboardLayout>
       <div className="w-full px-2">
+        
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
           <div className="lg:col-span-2 space-y-6">
             <ServicesPieChart studentName={user?.firstName} onTabChange={handleTabChange} />
-            <RecentActivities />
           </div>
 
           <aside className="space-y-6 flex flex-col">
@@ -48,7 +47,7 @@ const StudentDashboard = () => {
                 title="📊 German Grade Calculator"
                 subtitle="Convert your grades to the German grading system."
                 buttonText="Try Now"
-                minHeight="h-[570px]"
+                minHeight="h-[480px]"
               />
             </a>
             <a
@@ -62,7 +61,7 @@ const StudentDashboard = () => {
                 title="💰 Study Cost Calculator"
                 subtitle="Estimate your living and tuition costs in Germany."
                 buttonText="Calculate Now"
-                minHeight="h-[570px]"
+                minHeight="h-[485px]"
               />
             </a>
           </aside>
@@ -75,7 +74,7 @@ const StudentDashboard = () => {
               <Button className="mt-2 w-full">Learn More</Button>
             </Card>
             <PromoCardBig
-              minHeight="min-h-[865px]"
+              minHeight="min-h-[690px]"
               imageUrl="https://source.unsplash.com/800x1200/?passport,travel"
               title="✈️ Study Abroad Made Easy"
               subtitle="Get complete assistance for your university application, visa process, and relocation."

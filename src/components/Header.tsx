@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import companyLogo from "@/assets/gmi_logo.png";
 import { useAuth } from "@/auth/auth";
 import { useNavigate } from "react-router-dom";
 import { getApi } from "@/api/api";
+import StudentDashboardHeader from "./student/StudentDashboardHeader";
 
 const Header = () => {
-  const { logout } = useAuth(); // ✅ use it here (top-level)
+  const { logout, user } = useAuth(); // get user from auth context
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -23,14 +23,8 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center space-x-2">
-          <img
-            src={companyLogo}
-            alt="Company Logo"
-            className="h-8 w-auto object-contain"
-          />
-        </div>
+        {/* Left side: StudentDashboardHeader */}
+        <StudentDashboardHeader studentName={user ? `${user.firstName} ${user.lastName}` : "Student"} />
 
         {/* Logout Button */}
         <Button
