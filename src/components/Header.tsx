@@ -24,7 +24,9 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Left side: StudentDashboardHeader */}
-        <StudentDashboardHeader studentName={user ? `${user.firstName} ${user.lastName}` : "Student"} />
+        <div className="flex flex-1 justify-start pl-0 -ml-16">
+          <StudentDashboardHeader studentName={user ? `${user.firstName} ${user.lastName}` : "Student"} />
+        </div>
 
         {/* Logout Button */}
         <Button
