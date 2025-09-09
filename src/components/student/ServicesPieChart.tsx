@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +28,9 @@ export default function ServicesPieChart({
 }) {
   const navigate = useNavigate();
   const [hoveredService, setHoveredService] = useState<string | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 500, height: 500 });
   const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const servicesData: ServiceData[] = [
     {
@@ -119,6 +121,41 @@ export default function ServicesPieChart({
     },
   ];
 
+  const abbrMap: Record<string, string> = {
+    "APS": "APS",
+    "IELTS": "IELTS",
+    "SOP": "SOP",
+    "BLOCKED ACCOUNT": "Blocked Account",
+    "FOREIGN LANGUAGE": "Foreign Language",
+    "UNIVERSITY SHORTLISTING": "University Shortlist",
+    "VISA": "VISA",
+    "ACCOMODATION": "Accomo..",
+  };
+
+  // Responsive dimensions calculation
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        let size = Math.min(containerWidth - 40, 500); // Max 500px, min container width - padding
+        
+        // Breakpoint adjustments
+        if (window.innerWidth < 640) { // Mobile
+          size = Math.min(containerWidth - 20, 350);
+        } else if (window.innerWidth < 1024) { // Tablet
+          size = Math.min(containerWidth - 30, 400);
+        }
+        
+        setDimensions({ width: size, height: size });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
   const handleServiceClick = (service: ServiceData) => {
     const tab = service.purchased ? "my-services" : "other-services";
     if (onTabChange) onTabChange(tab);
@@ -128,6 +165,16 @@ export default function ServicesPieChart({
   const handleServiceHover = (serviceName: string | null) => {
     setHoveredService(serviceName);
   };
+
+  // Responsive scaling factors
+  const scale = dimensions.width / 500;
+  const center = dimensions.width / 2;
+  const outerRadius = 180 * scale;
+  const innerRadius = 80 * scale;
+  const chartRadius = 130 * scale; // Adjusted to keep text within slices
+  const borderRadius = 230 * scale;
+  const numberRadius = 270 * scale;
+  const progressBaseRadius = 240 * scale;
 
   // Calculate slice angles
   let currentAngle = 0;
@@ -200,22 +247,44 @@ export default function ServicesPieChart({
     return "○";
   };
 
+  // Responsive text sizes
+  const getTextSize = () => {
+    if (dimensions.width < 350) return "text-xs";
+    if (dimensions.width < 400) return "text-sm";
+    return "text-base";
+  };
+
+  const getIconSize = () => {
+    if (dimensions.width < 350) return "text-sm";
+    if (dimensions.width < 400) return "text-base";
+    return "text-lg";
+  };
+
   return (
     <Card className="mb-8 bg-gradient-card shadow-card">
-      <CardContent className="p-6">
-        <div className="relative flex justify-center overflow-visible pt-12">
-          <svg width={500} height={500} ref={svgRef} style={{ overflow: "visible" }}>
+      <CardContent className="p-3 sm:p-6">
+        <div 
+          ref={containerRef}
+          className="relative flex justify-center overflow-visible pt-6 sm:pt-12"
+        >
+          <svg 
+            width={dimensions.width} 
+            height={dimensions.height} 
+            ref={svgRef} 
+            style={{ overflow: "visible" }}
+            className="max-w-full h-auto"
+          >
             {/* Outer white border */}
-            <circle cx={250} cy={250} r={230} fill="white" className="drop-shadow-lg" />
+            <circle cx={center} cy={center} r={borderRadius} fill="white" className="drop-shadow-lg" />
 
             {/* Concentric arcs */}
             {slicesWithAngles.map((s) =>
               hoveredService === s.name && s.purchased && s.progressSteps ? (
                 s.progressSteps.map((step, idx) => {
-                  const radius = 240 + idx * 14;
+                  const radius = progressBaseRadius + idx * (14 * scale);
                   const { bgPath, fgPath } = buildArc(
-                    250,
-                    250,
+                    center,
+                    center,
                     radius,
                     s.startAngle,
                     s.endAngle,
@@ -223,8 +292,8 @@ export default function ServicesPieChart({
                   );
                   return (
                     <g key={`${s.name}-arc-${idx}`}>
-                      <path d={bgPath} fill="none" stroke="#e5e7eb" strokeWidth={8} opacity={0.3} strokeLinecap="round" />
-                      <path d={fgPath} fill="none" stroke={s.color} strokeWidth={8} strokeLinecap="round" />
+                      <path d={bgPath} fill="none" stroke="#e5e7eb" strokeWidth={8 * scale} opacity={0.3} strokeLinecap="round" />
+                      <path d={fgPath} fill="none" stroke={s.color} strokeWidth={8 * scale} strokeLinecap="round" />
                     </g>
                   );
                 })
@@ -233,8 +302,20 @@ export default function ServicesPieChart({
 
             {/* Pie slices */}
             {slicesWithAngles.map((service) => {
-              const slicePath = createSlicePath(250, 250, 100, 180, service.startAngle, service.endAngle);
-              const labelPos = polarToCartesian(250, 250, 140, service.midAngle);
+              const slicePath = createSlicePath(center, center, innerRadius, outerRadius, service.startAngle, service.endAngle);
+              const labelPos = polarToCartesian(center, center, chartRadius, service.midAngle);
+              const useAbbr = dimensions.width < 640; // Use abbreviations only on mobile devices
+              const displayName = useAbbr ? (abbrMap[service.name] || service.name) : service.name;
+              const lines = displayName.split(" ");
+              const maxWordLen = Math.max(...lines.map(w => w.length), 1);
+              const fontSizeNum = Math.min(10 * scale, (100 * scale) / maxWordLen); // Adjusted to fit within slices
+              const lineHeight = fontSizeNum * 1.2;
+              const n = lines.length;
+              const firstDy = -((n - 1) * lineHeight / 2);
+              const iconFontSizeNum = 18 * scale;
+              const spacing = 2 * scale;
+              const firstCenter = labelPos.y + firstDy;
+              const iconY = firstCenter - (fontSizeNum / 2) - spacing - (iconFontSizeNum / 2);
               return (
                 <g
                   key={service.name}
@@ -247,7 +328,7 @@ export default function ServicesPieChart({
                     d={slicePath}
                     fill={hoveredService === service.name && !service.purchased ? "#6366f1" : service.color}
                     stroke="white"
-                    strokeWidth={3}
+                    strokeWidth={3 * scale}
                     style={{
                       filter:
                         hoveredService === service.name
@@ -258,12 +339,25 @@ export default function ServicesPieChart({
                       opacity: !service.purchased ? 0.6 : 1,
                     }}
                   />
-                  <text x={labelPos.x} y={labelPos.y - 10} textAnchor="middle" dominantBaseline="central" className="text-lg">
+                  <text 
+                    x={labelPos.x} 
+                    y={iconY} 
+                    textAnchor="middle" 
+                    dominantBaseline="central"
+                    fontSize={`${iconFontSizeNum}px`}
+                  >
                     {service.icon}
                   </text>
-                  <text x={labelPos.x} y={labelPos.y + 12} textAnchor="middle" dominantBaseline="central" className="font-semibold text-white text-xs">
-                    {service.name.split(" ").map((w, i) => (
-                      <tspan key={i} x={labelPos.x} dy={i === 0 ? -6 : 10}>
+                  <text 
+                    x={labelPos.x} 
+                    y={labelPos.y} 
+                    textAnchor="middle" 
+                    dominantBaseline="central" 
+                    className={`text-white ${getTextSize()}`}
+                    fontSize={`${fontSizeNum}px`}
+                  >
+                    {lines.map((w, i) => (
+                      <tspan key={i} x={labelPos.x} dy={i === 0 ? firstDy : lineHeight}>
                         {w}
                       </tspan>
                     ))}
@@ -273,22 +367,43 @@ export default function ServicesPieChart({
             })}
 
             {/* Inner circle */}
-            <circle cx={250} cy={250} r={85} fill="white" stroke="#e5e7eb" strokeWidth={4} className="drop-shadow-md" />
-            <text x={250} y={250} textAnchor="middle" dominantBaseline="central" className="font-bold text-foreground text-lg">
+            <circle cx={center} cy={center} r={85 * scale} fill="white" stroke="#e5e7eb" strokeWidth={4 * scale} className="drop-shadow-md" />
+            <text 
+              x={center} 
+              y={center} 
+              textAnchor="middle" 
+              dominantBaseline="central" 
+              className="font-bold text-foreground"
+              fontSize={`${18 * scale}px`}
+            >
               {studentName}
             </text>
 
             {/* Service number & hover % */}
             {slicesWithAngles.map((s) => {
-              const numPos = polarToCartesian(250, 250, 270, s.midAngle);
+              const numPos = polarToCartesian(center, center, numberRadius, s.midAngle);
               return (
                 <g key={`${s.name}-num`}>
-                  <circle cx={numPos.x} cy={numPos.y} r={14} fill={s.purchased ? s.color : "#9ca3af"} stroke="white" strokeWidth={3} />
-                  <text x={numPos.x} y={numPos.y} textAnchor="middle" dominantBaseline="central" className="text-sm font-bold text-white">
+                  <circle cx={numPos.x} cy={numPos.y} r={14 * scale} fill={s.purchased ? s.color : "#9ca3af"} stroke="white" strokeWidth={3 * scale} />
+                  <text 
+                    x={numPos.x} 
+                    y={numPos.y} 
+                    textAnchor="middle" 
+                    dominantBaseline="central" 
+                    className="font-bold text-white"
+                    fontSize={`${14 * scale}px`}
+                  >
                     {s.number}
                   </text>
                   {hoveredService === s.name && s.overallProgress != null && (
-                    <text x={numPos.x} y={numPos.y + 30} textAnchor="middle" dominantBaseline="central" className="text-sm font-bold text-gray-700">
+                    <text 
+                      x={numPos.x} 
+                      y={numPos.y + (30 * scale)} 
+                      textAnchor="middle" 
+                      dominantBaseline="central" 
+                      className="font-bold text-gray-700"
+                      fontSize={`${14 * scale}px`}
+                    >
                       {s.overallProgress}%
                     </text>
                   )}
@@ -310,14 +425,14 @@ export default function ServicesPieChart({
                       const s = slicesWithAngles.find((x) => x.name === hoveredService);
                       if (!s) return "0,0";
                       const rad = ((s.midAngle - 90) * Math.PI) / 180;
-                      const x = 270 * Math.cos(rad);
-                      const y = 270 * Math.sin(rad);
+                      const x = (270 * scale) * Math.cos(rad);
+                      const y = (270 * scale) * Math.sin(rad);
                       return `${x}px,${y}px`;
                     })()})`,
                   }}
                 >
                   <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-xl"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-full shadow-xl text-xs sm:text-sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleServiceClick(servicesData.find((x) => x.name === hoveredService)!);
@@ -331,7 +446,7 @@ export default function ServicesPieChart({
         </div>
 
         {/* Service status legend */}
-        <div className="grid grid-cols-2 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mt-4 sm:mt-6">
           {servicesData.map((service) => (
             <div
               key={service.name}
@@ -349,34 +464,34 @@ export default function ServicesPieChart({
               onClick={() => handleServiceClick(service)}
             >
               {/* Main service info */}
-              <div className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex items-center gap-3">
+              <div className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <div
-                      className="w-5 h-5 rounded-full border-3 border-white shadow-lg flex items-center justify-center"
+                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 sm:border-3 border-white shadow-lg flex items-center justify-center"
                       style={{ backgroundColor: service.purchased ? service.color : "#9ca3af" }}
                     >
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                     </div>
-                    <span className="text-2xl">{service.icon}</span>
+                    <span className="text-lg sm:text-2xl">{service.icon}</span>
                   </div>
-                  <div className="flex-1">
-                    <h3 className={`font-semibold text-sm ${service.purchased ? "text-gray-800" : "text-gray-600"}`}>
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`font-medium text-xs sm:text-sm truncate ${service.purchased ? "text-gray-800" : "text-gray-600"}`}>
                       {service.name}
                     </h3>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                     {service.purchased ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium bg-green-100 text-green-700 px-2 py-1 rounded-full border border-green-200">
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <span className="text-xs font-medium bg-green-100 text-green-700 px-1.5 sm:px-2 py-1 rounded-full border border-green-200">
                           ✓ Purchased
                         </span>
-                        <div className="text-xs font-bold text-gray-700 bg-white px-2 py-1 rounded-full border border-gray-200 shadow-sm">
+                        <div className="text-xs font-bold text-gray-700 bg-white px-1.5 sm:px-2 py-1 rounded-full border border-gray-200 shadow-sm">
                           {service.overallProgress}%
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-1 rounded-full border border-blue-200">
+                      <span className="text-xs font-medium bg-blue-100 text-blue-700 px-1.5 sm:px-2 py-1 rounded-full border border-blue-200">
                         Available
                       </span>
                     )}
@@ -385,28 +500,28 @@ export default function ServicesPieChart({
 
                 {/* Progress steps - only show on hover for purchased services */}
                 {service.purchased && hoveredService === service.name && service.progressSteps && (
-                  <div className="mt-4 space-y-2 bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-white/50">
+                  <div className="mt-3 sm:mt-4 space-y-2 bg-white/70 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-white/50">
                     <div className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
                       <span>Progress Steps</span>
                       <div className="h-px bg-gray-300 flex-1"></div>
                     </div>
-                    <div className="grid gap-2">
+                    <div className="grid gap-1.5 sm:gap-2">
                       {service.progressSteps.map((step, i) => (
                         <div
                           key={i}
-                          className={`flex items-center justify-between p-2 rounded-lg border transition-all duration-200 ${getStepStatusColor(step.progress)}`}
+                          className={`flex items-center justify-between p-1.5 sm:p-2 rounded-lg border transition-all duration-200 ${getStepStatusColor(step.progress)}`}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">
+                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                            <span className="text-xs sm:text-sm font-medium flex-shrink-0">
                               {getStepIcon(step.progress)}
                             </span>
-                            <span className="text-xs font-medium">
+                            <span className="text-xs font-medium truncate">
                               {step.name}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                             {/* Mini progress bar */}
-                            <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="w-12 sm:w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                               <div
                                 className={`h-full transition-all duration-300 ${
                                   step.progress === 100
@@ -418,7 +533,7 @@ export default function ServicesPieChart({
                                 style={{ width: `${step.progress}%` }}
                               ></div>
                             </div>
-                            <span className="text-xs font-bold min-w-[28px] text-right">
+                            <span className="text-xs font-bold min-w-[24px] sm:min-w-[28px] text-right">
                               {step.progress}%
                             </span>
                           </div>
