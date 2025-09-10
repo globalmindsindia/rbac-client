@@ -46,6 +46,12 @@ export const menuConfig: MenuSection[] = [
         icon: BarChart3,
         roles: ["Super Admin"],
       },
+      {
+        title: "Course Management",
+        url: "/course/course-management",
+        icon: BookOpen,
+        roles: ["Super Admin"],
+      },
 
       // employee menu
       {

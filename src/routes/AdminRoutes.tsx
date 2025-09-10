@@ -4,6 +4,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import RolesManagement from "@/pages/admin/RolesManagement";
 import ApplicationManagement from "@/pages/admin/ApplicationManagement";
+import CourseManagement from "@/pages/admin/course/CourseManagement";
 
 export const AdminRoutes = [
   <Route
@@ -39,6 +40,16 @@ export const AdminRoutes = [
     element={
       <ProtectedRoute>
         <EmployeeDashboard />
+      </ProtectedRoute>
+    }
+  />,
+
+  <Route
+    key="course-management"
+    path="/course/course-management"
+    element={
+      <ProtectedRoute>
+        <CourseManagement />
       </ProtectedRoute>
     }
   />,
