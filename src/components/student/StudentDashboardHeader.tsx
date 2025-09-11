@@ -43,22 +43,41 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
   const words2 = line2.split(" ");
 
   const headerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(300);
 
   // Aircraft position state
   const [aircraftX, setAircraftX] = useState(0);
   const [targetX, setTargetX] = useState(300);
 
+  // Responsive scaling factor
+  const getScale = () => {
+    if (containerWidth < 320) return 0.8; // Mobile
+    if (containerWidth < 640) return 0.9; // Larger mobile
+    if (containerWidth < 1024) return 1.0; // Tablet
+    return 1.2; // Desktop
+  };
+
+  // Update container width and targetX
   useEffect(() => {
-    if (headerRef.current) {
-      const spans = headerRef.current.querySelectorAll('span');
-      const widths = Array.from(spans).map(
-        (span) => span.offsetLeft + span.offsetWidth
-      );
-      const maxWidth = Math.max(...widths, 0);
-      setTargetX(maxWidth + AIRCRAFT_GAP);
-    }
+    const updateDimensions = () => {
+      if (headerRef.current) {
+        const width = headerRef.current.offsetWidth;
+        setContainerWidth(width);
+        const spans = headerRef.current.querySelectorAll('span');
+        const widths = Array.from(spans).map(
+          (span) => span.offsetLeft + span.offsetWidth
+        );
+        const maxWidth = Math.min(Math.max(...widths, 0), width - 60 * getScale()); // Prevent overflow
+        setTargetX(maxWidth + AIRCRAFT_GAP * getScale());
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
   }, [line1, line2, studentName]);
 
+  // Aircraft animation
   useEffect(() => {
     let start: number | null = null;
     function animate(ts: number) {
@@ -82,9 +101,9 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
       );
       setWordPositions(positions);
     }
-  }, [line1, line2, studentName]);
+  }, [line1, line2, studentName, containerWidth]);
 
-  // Reveal words only if aircraft has passed their position
+  // Render words with responsive reveal
   const renderWords = (words: string[], offset: number) =>
     words.map((word, i) => (
       <span
@@ -92,22 +111,25 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
         style={{
           visibility: aircraftX > (wordPositions[offset + i] || 0) ? "visible" : "hidden",
           transition: "visibility 0.2s",
-          marginRight: "6px"
+          marginRight: `${4 * getScale()}px`, // Responsive word spacing
         }}
+        className="inline-block"
       >
         {word}
       </span>
     ));
 
+  const scale = getScale();
+
   return (
-    <div className="flex items-center gap-3">
-      <Avatar className="h-8 w-8">
+    <div className="flex items-center gap-2 xs:gap-3 sm:gap-4">
+      <Avatar className="h-6 xs:h-7 sm:h-8 w-6 xs:w-7 sm:w-8">
         <AvatarImage src="" alt={studentName} />
-        <AvatarFallback className="bg-blue-500 text-white text-sm font-medium">
+        <AvatarFallback className="bg-blue-500 text-white text-xs xs:text-sm sm:text-base font-medium">
           {getInitials(studentName)}
         </AvatarFallback>
       </Avatar>
-      <div className="relative flex flex-col" ref={headerRef}>
+      <div className="relative flex flex-col max-w-full" ref={headerRef}>
         {/* Aircraft */}
         <img
           src={aircraftImg}
@@ -115,17 +137,18 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
           style={{
             position: "absolute",
             left: `${aircraftX}px`,
-            top: -3,
-            height: "50px",
-            width: "60px",
+            top: -3 * scale,
+            height: `${40 * scale}px`,
+            width: `${48 * scale}px`,
             transition: "left 0.1s linear",
             zIndex: 2,
           }}
+          className="max-w-none"
         />
-        <p className="text-sm font-medium text-foreground" style={{ position: "relative", zIndex: 1 }}>
+        <p className="text-xs xs:text-sm sm:text-base font-medium text-foreground" style={{ position: "relative", zIndex: 1 }}>
           {renderWords(words1, 0)}
         </p>
-        <p className="text-xs text-muted-foreground" style={{ position: "relative", zIndex: 1 }}>
+        <p className="text-[0.65rem] xs:text-xs sm:text-sm text-muted-foreground" style={{ position: "relative", zIndex: 1 }}>
           {renderWords(words2, words1.length)}
         </p>
       </div>

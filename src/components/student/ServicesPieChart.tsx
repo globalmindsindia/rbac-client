@@ -260,6 +260,14 @@ export default function ServicesPieChart({
     return "text-lg";
   };
 
+  // Responsive grid columns for legend
+  const getGridCols = () => {
+    if (dimensions.width < 640) return "grid-cols-1";
+    if (dimensions.width < 1024) return "grid-cols-2";
+    if (dimensions.width < 1280) return "grid-cols-3";
+    return "grid-cols-4";
+  };
+
   return (
     <Card className="mb-8 bg-gradient-card shadow-card">
       <CardContent className="p-3 sm:p-6">
@@ -446,7 +454,7 @@ export default function ServicesPieChart({
         </div>
 
         {/* Service status legend */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mt-4 sm:mt-6">
+        <div className={`grid ${getGridCols()} gap-2 sm:gap-3 lg:gap-4 mt-4 sm:mt-6 max-w-full`}>
           {servicesData.map((service) => (
             <div
               key={service.name}
@@ -464,34 +472,34 @@ export default function ServicesPieChart({
               onClick={() => handleServiceClick(service)}
             >
               {/* Main service info */}
-              <div className="p-3 sm:p-4">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3">
-                  <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 xs:p-3 sm:p-4">
+                <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 mb-2 xs:mb-3">
+                  <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3">
                     <div
-                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 sm:border-3 border-white shadow-lg flex items-center justify-center"
+                      className="w-3 xs:w-4 sm:w-5 h-3 xs:h-4 sm:h-5 rounded-full border-2 sm:border-3 border-white shadow-lg flex items-center justify-center"
                       style={{ backgroundColor: service.purchased ? service.color : "#9ca3af" }}
                     >
-                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+                      <div className="w-1 xs:w-1.5 sm:w-2 h-1 xs:h-1.5 sm:h-2 bg-white rounded-full"></div>
                     </div>
-                    <span className="text-lg sm:text-2xl">{service.icon}</span>
+                    <span className={`${getIconSize()} flex-shrink-0`}>{service.icon}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className={`font-medium text-xs sm:text-sm truncate ${service.purchased ? "text-gray-800" : "text-gray-600"}`}>
+                    <h3 className={`font-medium text-[0.65rem] xs:text-xs sm:text-sm truncate ${service.purchased ? "text-gray-800" : "text-gray-600"}`}>
                       {service.name}
                     </h3>
                   </div>
-                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 flex-shrink-0">
                     {service.purchased ? (
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <span className="text-xs font-medium bg-green-100 text-green-700 px-1.5 sm:px-2 py-1 rounded-full border border-green-200">
+                      <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2">
+                        <span className="text-[0.6rem] xs:text-xs font-medium bg-green-100 text-green-700 px-1 xs:px-1.5 sm:px-2 py-0.5 xs:py-1 rounded-full border border-green-200">
                           ✓ Purchased
                         </span>
-                        <div className="text-xs font-bold text-gray-700 bg-white px-1.5 sm:px-2 py-1 rounded-full border border-gray-200 shadow-sm">
+                        <div className="text-[0.6rem] xs:text-xs font-bold text-gray-700 bg-white px-1 xs:px-1.5 sm:px-2 py-0.5 xs:py-1 rounded-full border border-gray-200 shadow-sm">
                           {service.overallProgress}%
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs font-medium bg-blue-100 text-blue-700 px-1.5 sm:px-2 py-1 rounded-full border border-blue-200">
+                      <span className="text-[0.6rem] xs:text-xs font-medium bg-blue-100 text-blue-700 px-1 xs:px-1.5 sm:px-2 py-0.5 xs:py-1 rounded-full border border-blue-200">
                         Available
                       </span>
                     )}
@@ -500,28 +508,28 @@ export default function ServicesPieChart({
 
                 {/* Progress steps - only show on hover for purchased services */}
                 {service.purchased && hoveredService === service.name && service.progressSteps && (
-                  <div className="mt-3 sm:mt-4 space-y-2 bg-white/70 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-white/50">
-                    <div className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                  <div className="mt-2 xs:mt-3 sm:mt-4 space-y-1.5 xs:space-y-2 bg-white/70 backdrop-blur-sm rounded-lg p-1.5 xs:p-2 sm:p-3 border border-white/50">
+                    <div className="text-[0.6rem] xs:text-xs font-semibold text-gray-700 mb-1.5 xs:mb-2 flex items-center gap-1">
                       <span>Progress Steps</span>
                       <div className="h-px bg-gray-300 flex-1"></div>
                     </div>
-                    <div className="grid gap-1.5 sm:gap-2">
+                    <div className="grid gap-1 xs:gap-1.5 sm:gap-2">
                       {service.progressSteps.map((step, i) => (
                         <div
                           key={i}
-                          className={`flex items-center justify-between p-1.5 sm:p-2 rounded-lg border transition-all duration-200 ${getStepStatusColor(step.progress)}`}
+                          className={`flex items-center justify-between p-1 xs:p-1.5 sm:p-2 rounded-lg border transition-all duration-200 ${getStepStatusColor(step.progress)}`}
                         >
-                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-                            <span className="text-xs sm:text-sm font-medium flex-shrink-0">
+                          <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 min-w-0 flex-1">
+                            <span className="text-[0.6rem] xs:text-xs sm:text-sm font-medium flex-shrink-0">
                               {getStepIcon(step.progress)}
                             </span>
-                            <span className="text-xs font-medium truncate">
+                            <span className="text-[0.6rem] xs:text-xs font-medium truncate">
                               {step.name}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 flex-shrink-0">
                             {/* Mini progress bar */}
-                            <div className="w-12 sm:w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="w-10 xs:w-12 sm:w-16 h-1 xs:h-1.5 bg-gray-200 rounded-full overflow-hidden">
                               <div
                                 className={`h-full transition-all duration-300 ${
                                   step.progress === 100
@@ -533,7 +541,7 @@ export default function ServicesPieChart({
                                 style={{ width: `${step.progress}%` }}
                               ></div>
                             </div>
-                            <span className="text-xs font-bold min-w-[24px] sm:min-w-[28px] text-right">
+                            <span className="text-[0.6rem] xs:text-xs font-bold min-w-[20px] xs:min-w-[24px] sm:min-w-[28px] text-right">
                               {step.progress}%
                             </span>
                           </div>
@@ -546,8 +554,8 @@ export default function ServicesPieChart({
 
               {/* Hover indicator */}
               {hoveredService === service.name && (
-                <div className="absolute top-2 right-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <div className="absolute top-1 xs:top-2 right-1 xs:right-2">
+                  <div className="w-1.5 xs:w-2 h-1.5 xs:h-2 bg-blue-500 rounded-full animate-pulse"></div>
                 </div>
               )}
             </div>

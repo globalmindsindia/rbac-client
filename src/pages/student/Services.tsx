@@ -15,18 +15,19 @@ const Services = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="p-3 xs:p-4 sm:p-6">
+        <div className="max-w-full sm:max-w-3xl md:max-w-5xl lg:max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsContent value="my-services" className="mt-6">
+            
+            <TabsContent value="my-services" className="mt-4 xs:mt-5 sm:mt-6">
               <PurchasedServices />
             </TabsContent>
-            <TabsContent value="other-services" className="mt-6">
-              <div className="mb-6">
-                <h1 className="text-3xl font-bold text-foreground">
+            <TabsContent value="other-services" className="mt-4 xs:mt-5 sm:mt-6">
+              <div className="mb-4 xs:mb-5 sm:mb-6">
+                <h1 className="text-xl xs:text-2xl sm:text-3xl font-bold text-foreground">
                   Other Services
                 </h1>
-                <p className="text-muted-foreground mt-2">
+                <p className="text-xs xs:text-sm sm:text-base text-muted-foreground mt-1 xs:mt-2">
                   Explore and purchase new services to enhance your learning journey
                 </p>
               </div>

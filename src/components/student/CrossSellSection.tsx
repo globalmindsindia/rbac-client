@@ -55,74 +55,80 @@ const services: CrossSellService[] = [
 ];
 
 const CrossSellSection = () => (
-  <section>
-    <Card className="bg-gradient-primary text-primary-foreground p-4 mb-6 shadow-md">
-      <div className="flex items-center gap-3">
-        <div className="p-3 bg-white/20 rounded-full">
-          <ShoppingCart className="w-6 h-6" />
+  <section className="px-3 xs:px-4 sm:px-6">
+    <Card className="bg-gradient-primary text-primary-foreground p-3 xs:p-4 sm:p-5 mb-4 xs:mb-5 sm:mb-6 shadow-md">
+      <div className="flex items-center gap-2 xs:gap-3 sm:gap-4">
+        <div className="p-2 xs:p-2.5 sm:p-3 bg-white/20 rounded-full">
+          <ShoppingCart className="w-5 xs:w-6 sm:w-7 h-5 xs:h-6 sm:h-7" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold">Enhance Your Journey</h2>
-          <p className="text-sm text-primary-foreground/90">
+          <h2 className="text-base xs:text-lg sm:text-xl font-semibold">Enhance Your Journey</h2>
+          <p className="text-xs xs:text-sm sm:text-base text-primary-foreground/90">
             Unlock services to maximize your success
           </p>
         </div>
       </div>
     </Card>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {services.map((svc, idx) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 xs:gap-4 sm:gap-6">
+      {services.map((svc) => (
         <Card
           key={svc.id}
-          className={`relative overflow-hidden border-0 p-3 ${
+          className={`relative overflow-hidden border-0 p-2 xs:p-3 sm:p-4 flex flex-col ${
             svc.isPopular ? "ring-2 ring-accent/30" : ""
           }`}
         >
           {svc.isPopular && (
-            <Badge className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-accent text-accent-foreground px-2 py-0.5 text-xs">
-              <Star className="inline w-3 h-3 mr-1" />
+            <Badge className="absolute top-2 xs:top-3 sm:top-4 left-1/2 transform -translate-x-1/2 bg-accent text-accent-foreground px-1.5 xs:px-2 sm:px-2.5 py-0.5 text-[0.65rem] xs:text-xs sm:text-sm">
+              <Star className="inline w-2.5 xs:w-3 sm:w-3.5 h-2.5 xs:h-3 sm:h-3.5 mr-1" />
               Popular
             </Badge>
           )}
           {svc.discount && (
-            <Badge className="absolute top-2 right-2 bg-secondary text-secondary-foreground px-2 py-0.5 text-xs">
+            <Badge className="absolute top-2 xs:top-3 sm:top-4 right-2 xs:right-3 sm:right-4 bg-secondary text-secondary-foreground px-1.5 xs:px-2 sm:px-2.5 py-0.5 text-[0.65rem] xs:text-xs sm:text-sm">
               {svc.discount}
             </Badge>
           )}
-          <CardContent className="p-4 flex flex-col h-full">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <img src={svc.icon} alt={svc.name} className="w-6 h-6" />
+          <CardContent className="p-3 xs:p-4 sm:p-5 flex flex-col h-full">
+            <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 mb-2 xs:mb-3 sm:mb-4">
+              <div className="p-1.5 xs:p-2 sm:p-2.5 bg-primary/10 rounded-lg">
+                <img
+                  src={svc.icon}
+                  alt={svc.name}
+                  className="w-5 xs:w-6 sm:w-7 h-5 xs:h-6 sm:h-7"
+                />
               </div>
               <div>
-                <h3 className="font-semibold text-base">{svc.name}</h3>
-                <p className="text-xs text-primary font-medium">{svc.usp}</p>
+                <h3 className="font-semibold text-sm xs:text-base sm:text-lg">{svc.name}</h3>
+                <p className="text-[0.65rem] xs:text-xs sm:text-sm text-primary font-medium">
+                  {svc.usp}
+                </p>
               </div>
             </div>
 
-            <div className="mb-3">
-              <span className="text-lg font-bold">{svc.price}</span>
+            <div className="mb-2 xs:mb-3 sm:mb-4">
+              <span className="text-base xs:text-lg sm:text-xl font-bold">{svc.price}</span>
               {svc.originalPrice && (
-                <span className="text-xs line-through text-muted-foreground ml-2">
+                <span className="text-[0.65rem] xs:text-xs sm:text-sm line-through text-muted-foreground ml-1 xs:ml-2">
                   {svc.originalPrice}
                 </span>
               )}
             </div>
 
-            <ul className="flex-1 mb-4 space-y-1 text-sm text-muted-foreground">
+            <ul className="flex-1 mb-3 xs:mb-4 sm:mb-5 space-y-1 xs:space-y-1.5 sm:space-y-2 text-[0.65rem] xs:text-xs sm:text-sm text-muted-foreground">
               {svc.features.map((feat, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full" />
+                <li key={i} className="flex items-center gap-1 xs:gap-1.5 sm:gap-2">
+                  <span className="w-1 xs:w-1.5 sm:w-2 h-1 xs:h-1.5 sm:h-2 bg-primary rounded-full" />
                   {feat}
                 </li>
               ))}
             </ul>
 
             <Button
-              variant="gradient"
-              className="w-full py-2 mt-auto hover:shadow-md transition"
+              variant="default"
+              className="w-full py-1 xs:py-1.5 sm:py-2 mt-auto text-xs xs:text-sm sm:text-base bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white hover:shadow-md transition"
             >
-              <ShoppingCart className="w-4 h-4 mr-1" />
+              <ShoppingCart className="w-3 xs:w-4 sm:w-5 h-3 xs:h-4 sm:h-5 mr-1" />
               Purchase
             </Button>
           </CardContent>
