@@ -60,7 +60,7 @@ const StudentDashboard = () => {
                 title="💰 Study Cost Calculator"
                 subtitle="Estimate your living and tuition costs in Germany."
                 buttonText="Calculate Now"
-                minHeight="min-h-[360px] xs:min-h-[400px] sm:min-h-[440px] lg:min-h-[640px]"
+                minHeight="min-h-[360px] xs:min-h-[400px] sm:min-h-[440px] lg:min-h-[505px]"
               />
             </a>
           </aside>
@@ -68,19 +68,19 @@ const StudentDashboard = () => {
           <aside className="space-y-4 xs:space-y-5 sm:space-y-8">
             <PromotionalBanner />
             <Card className="p-4 xs:p-6 sm:p-10 bg-gradient-to-r from-blue-50 to-white rounded-lg shadow-md border border-blue-200">
-  <h3 className="text-sm xs:text-base sm:text-lg font-semibold text-blue-700">
-    Special Offer
-  </h3>
-  <p className="text-xs xs:text-sm sm:text-base text-blue-800 mt-2 xs:mt-3 leading-relaxed">
-    Register Now and get upto <span className="font-bold text-blue-900">1 lakh</span> offer on our premium services!
-  </p>
-  <Button className="mt-4 xs:mt-5 w-full text-xs xs:text-sm sm:text-base py-2 xs:py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-sm transition-colors duration-300">
-    Learn More
-  </Button>
-</Card>
+              <h3 className="text-sm xs:text-base sm:text-lg font-semibold text-blue-700">
+                Special Offer
+              </h3>
+              <p className="text-xs xs:text-sm sm:text-base text-blue-800 mt-2 xs:mt-3 leading-relaxed">
+                Register Now and get upto <span className="font-bold text-blue-900">1 lakh</span> offer on our premium services!
+              </p>
+              <Button className="mt-4 xs:mt-5 w-full text-xs xs:text-sm sm:text-base py-2 xs:py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-sm transition-colors duration-300">
+                Learn More
+              </Button>
+            </Card>
 
             <PromoCardBig
-              minHeight="min-h-[520px] xs:min-h-[580px] sm:min-h-[640px] lg:min-h-[850px]"
+              minHeight="min-h-[520px] xs:min-h-[580px] sm:min-h-[640px] lg:min-h-[250px]"
               imageUrl="https://source.unsplash.com/800x1200/?passport,travel"
               title="✈️ Study Abroad Made Easy"
               subtitle="Get complete assistance for your university application, visa process, and relocation."
