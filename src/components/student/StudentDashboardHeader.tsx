@@ -8,6 +8,7 @@ interface DashboardHeaderProps {
 
 const ANIMATION_DURATION = 1800; // ms
 const AIRCRAFT_GAP = 8; // px space between text end and aircraft
+const AIRCRAFT_EXTRA_GAP = 24; // extra px to prevent overlap on long names
 
 function getInitials(name: string): string {
   const words = name.trim().split(" ");
@@ -63,18 +64,23 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
       if (headerRef.current) {
         const width = headerRef.current.offsetWidth;
         setContainerWidth(width);
-        const spans = headerRef.current.querySelectorAll('span');
+        const spans = headerRef.current.querySelectorAll("span");
         const widths = Array.from(spans).map(
           (span) => span.offsetLeft + span.offsetWidth
         );
-        const maxWidth = Math.min(Math.max(...widths, 0), width - 60 * getScale()); // Prevent overflow
-        setTargetX(maxWidth + AIRCRAFT_GAP * getScale());
+        const maxWidth = Math.min(
+          Math.max(...widths, 0),
+          width - 60 * getScale()
+        ); // Prevent overflow
+        setTargetX(
+          maxWidth + AIRCRAFT_GAP * getScale() + AIRCRAFT_EXTRA_GAP * getScale()
+        );
       }
     };
 
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
   }, [line1, line2, studentName]);
 
   // Aircraft animation
@@ -95,7 +101,7 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   useEffect(() => {
     if (headerRef.current) {
-      const spans = headerRef.current.querySelectorAll('span');
+      const spans = headerRef.current.querySelectorAll("span");
       const positions = Array.from(spans).map(
         (span) => span.offsetLeft + span.offsetWidth / 2
       );
@@ -109,7 +115,8 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
       <span
         key={i}
         style={{
-          visibility: aircraftX > (wordPositions[offset + i] || 0) ? "visible" : "hidden",
+          visibility:
+            aircraftX > (wordPositions[offset + i] || 0) ? "visible" : "hidden",
           transition: "visibility 0.2s",
           marginRight: `${4 * getScale()}px`, // Responsive word spacing
         }}
@@ -145,10 +152,16 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
           }}
           className="max-w-none"
         />
-        <p className="text-xs xs:text-sm sm:text-base font-medium text-foreground" style={{ position: "relative", zIndex: 1 }}>
+        <p
+          className="text-xs xs:text-sm sm:text-base font-medium text-foreground"
+          style={{ position: "relative", zIndex: 1 }}
+        >
           {renderWords(words1, 0)}
         </p>
-        <p className="text-[0.65rem] xs:text-xs sm:text-sm text-muted-foreground" style={{ position: "relative", zIndex: 1 }}>
+        <p
+          className="text-[0.65rem] xs:text-xs sm:text-sm text-muted-foreground"
+          style={{ position: "relative", zIndex: 1 }}
+        >
           {renderWords(words2, words1.length)}
         </p>
       </div>
