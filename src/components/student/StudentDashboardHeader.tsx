@@ -6,9 +6,10 @@ interface DashboardHeaderProps {
   studentName: string;
 }
 
-const ANIMATION_DURATION = 1800; // ms
-const AIRCRAFT_GAP = 8; // px space between text end and aircraft
-const AIRCRAFT_EXTRA_GAP = 24; // extra px to prevent overlap on long names
+const ANIMATION_DURATION = 1800;
+const AIRCRAFT_EXTRA_MARGIN = 8; // Minimal gap in px after the text
+const AIRCRAFT_IMG_WIDTH = 48;
+const AIRCRAFT_IMG_HEIGHT = 40;
 
 function getInitials(name: string): string {
   const words = name.trim().split(" ");
@@ -40,92 +41,50 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
   const line1 = `${greeting}, ${studentName}!`;
   const line2 = "Welcome to your study abroad journey";
 
-  const words1 = line1.split(" ");
-  const words2 = line2.split(" ");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const greetingRef = useRef<HTMLSpanElement>(null);
 
-  const headerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(300);
-
-  // Aircraft position state
+  const [greetingWidth, setGreetingWidth] = useState(0);
   const [aircraftX, setAircraftX] = useState(0);
-  const [targetX, setTargetX] = useState(300);
 
-  // Responsive scaling factor
-  const getScale = () => {
-    if (containerWidth < 320) return 0.8; // Mobile
-    if (containerWidth < 640) return 0.9; // Larger mobile
-    if (containerWidth < 1024) return 1.0; // Tablet
-    return 1.2; // Desktop
-  };
-
-  // Update container width and targetX
   useEffect(() => {
-    const updateDimensions = () => {
-      if (headerRef.current) {
-        const width = headerRef.current.offsetWidth;
-        setContainerWidth(width);
-        const spans = headerRef.current.querySelectorAll("span");
-        const widths = Array.from(spans).map(
-          (span) => span.offsetLeft + span.offsetWidth
-        );
-        const maxWidth = Math.min(
-          Math.max(...widths, 0),
-          width - 60 * getScale()
-        ); // Prevent overflow
-        setTargetX(
-          maxWidth + AIRCRAFT_GAP * getScale() + AIRCRAFT_EXTRA_GAP * getScale()
-        );
+    // Update on mount and resize
+    const updateWidths = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+      if (greetingRef.current) {
+        setGreetingWidth(greetingRef.current.offsetWidth);
       }
     };
+    updateWidths();
+    window.addEventListener("resize", updateWidths);
+    return () => window.removeEventListener("resize", updateWidths);
+  }, [studentName]);
 
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, [line1, line2, studentName]);
-
-  // Aircraft animation
+  // Animate aircraft to the exact position after greeting
   useEffect(() => {
     let start: number | null = null;
+    const target = greetingWidth + AIRCRAFT_EXTRA_MARGIN;
     function animate(ts: number) {
       if (!start) start = ts;
       const elapsed = ts - start;
       const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
-      setAircraftX(progress * targetX);
+      setAircraftX(progress * target);
       if (progress < 1) requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
-  }, [targetX]);
+    return () => setAircraftX(0);
+  }, [greetingWidth, studentName]);
 
-  // Calculate left positions for words for reveal
-  const [wordPositions, setWordPositions] = useState<number[]>([]);
-
-  useEffect(() => {
-    if (headerRef.current) {
-      const spans = headerRef.current.querySelectorAll("span");
-      const positions = Array.from(spans).map(
-        (span) => span.offsetLeft + span.offsetWidth / 2
-      );
-      setWordPositions(positions);
-    }
-  }, [line1, line2, studentName, containerWidth]);
-
-  // Render words with responsive reveal
-  const renderWords = (words: string[], offset: number) =>
-    words.map((word, i) => (
-      <span
-        key={i}
-        style={{
-          visibility:
-            aircraftX > (wordPositions[offset + i] || 0) ? "visible" : "hidden",
-          transition: "visibility 0.2s",
-          marginRight: `${4 * getScale()}px`, // Responsive word spacing
-        }}
-        className="inline-block"
-      >
-        {word}
-      </span>
-    ));
-
+  // Responsive scaling for aircraft
+  const getScale = () => {
+    if (containerWidth < 320) return 0.8;
+    if (containerWidth < 640) return 0.9;
+    if (containerWidth < 1024) return 1.0;
+    return 1.2;
+  };
   const scale = getScale();
 
   return (
@@ -136,33 +95,35 @@ const StudentDashboardHeader: React.FC<DashboardHeaderProps> = ({
           {getInitials(studentName)}
         </AvatarFallback>
       </Avatar>
-      <div className="relative flex flex-col max-w-full" ref={headerRef}>
-        {/* Aircraft */}
-        <img
-          src={aircraftImg}
-          alt="Aircraft"
-          style={{
-            position: "absolute",
-            left: `${aircraftX}px`,
-            top: -3 * scale,
-            height: `${40 * scale}px`,
-            width: `${48 * scale}px`,
-            transition: "left 0.1s linear",
-            zIndex: 2,
-          }}
-          className="max-w-none"
-        />
-        <p
-          className="text-xs xs:text-sm sm:text-base font-medium text-foreground"
-          style={{ position: "relative", zIndex: 1 }}
-        >
-          {renderWords(words1, 0)}
-        </p>
-        <p
-          className="text-[0.65rem] xs:text-xs sm:text-sm text-muted-foreground"
-          style={{ position: "relative", zIndex: 1 }}
-        >
-          {renderWords(words2, words1.length)}
+      <div className="relative flex flex-col max-w-full" ref={containerRef}>
+        <div style={{ position: "relative", minHeight: `${AIRCRAFT_IMG_HEIGHT * scale}px` }}>
+          {/* Greeting Text */}
+          <span
+            ref={greetingRef}
+            className="text-xs xs:text-sm sm:text-base font-medium text-foreground"
+            style={{ whiteSpace: "nowrap", zIndex: 1 }}
+          >
+            {line1}
+          </span>
+          {/* Animated Aircraft */}
+          <img
+            src={aircraftImg}
+            alt="Aircraft"
+            style={{
+              position: "absolute",
+              left: `${aircraftX}px`,
+              top: -3 * scale,
+              height: `${AIRCRAFT_IMG_HEIGHT * scale}px`,
+              width: `${AIRCRAFT_IMG_WIDTH * scale}px`,
+              transition: "left 0.1s linear",
+              zIndex: 2,
+              pointerEvents: "none",
+            }}
+            className="max-w-none"
+          />
+        </div>
+        <p className="text-[0.65rem] xs:text-xs sm:text-sm text-muted-foreground" style={{ marginTop: "2px" }}>
+          {line2}
         </p>
       </div>
     </div>
