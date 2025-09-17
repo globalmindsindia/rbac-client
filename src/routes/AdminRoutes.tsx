@@ -5,6 +5,7 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import RolesManagement from "@/pages/admin/RolesManagement";
 import ApplicationManagement from "@/pages/admin/ApplicationManagement";
 import CourseManagement from "@/pages/admin/course/CourseManagement";
+import LeadsManagement from "@/pages/admin/leads/LeadsManagement";
 
 export const AdminRoutes = [
   <Route
@@ -50,6 +51,15 @@ export const AdminRoutes = [
     element={
       <ProtectedRoute>
         <CourseManagement />
+      </ProtectedRoute>
+    }
+  />,
+  <Route
+    key="lead-management"
+    path="/lead/lead-management"
+    element={
+      <ProtectedRoute>
+        <LeadsManagement />
       </ProtectedRoute>
     }
   />,
