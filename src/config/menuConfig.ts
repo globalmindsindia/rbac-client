@@ -52,6 +52,12 @@ export const menuConfig: MenuSection[] = [
         icon: BookOpen,
         roles: ["Super Admin"],
       },
+      {
+        title: "Lead Management",
+        url: "/lead/lead-management",
+        icon: BookOpen,
+        roles: ["Super Admin"],
+      },
 
       // employee menu
       {
