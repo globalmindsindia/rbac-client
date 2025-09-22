@@ -132,27 +132,21 @@ export default function ServicesPieChart({
     "ACCOMODATION": "Accomo..",
   };
 
-  // Responsive dimensions calculation
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
-        let size = Math.min(containerWidth - 40, 500); // Max 500px, min container width - padding
-        
-        // Breakpoint adjustments
-        if (window.innerWidth < 640) { // Mobile
+        let size = Math.min(containerWidth - 40, 500);
+        if (window.innerWidth < 640) {
           size = Math.min(containerWidth - 20, 350);
-        } else if (window.innerWidth < 1024) { // Tablet
+        } else if (window.innerWidth < 1024) {
           size = Math.min(containerWidth - 30, 400);
         }
-        
         setDimensions({ width: size, height: size });
       }
     };
-
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
-    
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
@@ -166,17 +160,14 @@ export default function ServicesPieChart({
     setHoveredService(serviceName);
   };
 
-  // Responsive scaling factors
   const scale = dimensions.width / 500;
   const center = dimensions.width / 2;
   const outerRadius = 180 * scale;
   const innerRadius = 80 * scale;
-  const chartRadius = 130 * scale; // Adjusted to keep text within slices
+  const chartRadius = 130 * scale;
   const borderRadius = 230 * scale;
-  const numberRadius = 270 * scale;
-  const progressBaseRadius = 240 * scale;
+  const numberRadius = 280 * scale;
 
-  // Calculate slice angles
   let currentAngle = 0;
   const slicesWithAngles = servicesData.map((service) => {
     const startAngle = currentAngle;
@@ -186,32 +177,11 @@ export default function ServicesPieChart({
     return { ...service, startAngle, endAngle, midAngle };
   });
 
-  // Polar to Cartesian
   const polarToCartesian = (cx: number, cy: number, r: number, deg: number) => {
     const rad = ((deg - 90) * Math.PI) / 180;
     return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
   };
 
-  // Build arc for percent
-  const buildArc = (
-    cx: number,
-    cy: number,
-    radius: number,
-    startDeg: number,
-    endDeg: number,
-    pct: number
-  ) => {
-    const progDeg = startDeg + ((endDeg - startDeg) * pct) / 100;
-    const startPt = polarToCartesian(cx, cy, radius, endDeg);
-    const fullPt = polarToCartesian(cx, cy, radius, startDeg);
-    const progPt = polarToCartesian(cx, cy, radius, progDeg);
-    const largeArc = progDeg - startDeg > 180 ? 1 : 0;
-    const bgPath = ["M", startPt.x, startPt.y, "A", radius, radius, 0, largeArc, 0, fullPt.x, fullPt.y].join(" ");
-    const fgPath = ["M", startPt.x, startPt.y, "A", radius, radius, 0, largeArc, 0, progPt.x, progPt.y].join(" ");
-    return { bgPath, fgPath };
-  };
-
-  // Create slice path
   const createSlicePath = (
     cx: number,
     cy: number,
@@ -234,11 +204,10 @@ export default function ServicesPieChart({
     ].join(" ");
   };
 
-  // Get status color based on progress
   const getStepStatusColor = (progress: number) => {
-    if (progress === 100) return "text-green-600 bg-green-50 border-green-200";
-    if (progress > 0) return "text-amber-600 bg-amber-50 border-amber-200";
-    return "text-gray-500 bg-gray-50 border-gray-200";
+    if (progress === 100) return "#22c55e";
+    if (progress > 0) return "#f59e42";
+    return "#64748b";
   };
 
   const getStepIcon = (progress: number) => {
@@ -247,7 +216,6 @@ export default function ServicesPieChart({
     return "○";
   };
 
-  // Responsive text sizes
   const getTextSize = () => {
     if (dimensions.width < 350) return "text-xs";
     if (dimensions.width < 400) return "text-sm";
@@ -260,7 +228,6 @@ export default function ServicesPieChart({
     return "text-lg";
   };
 
-  // Responsive grid columns for legend
   const getGridCols = () => {
     if (dimensions.width < 640) return "grid-cols-1";
     if (dimensions.width < 1024) return "grid-cols-2";
@@ -268,55 +235,333 @@ export default function ServicesPieChart({
     return "grid-cols-4";
   };
 
+  // Sun rays config
+  const sunRayMinLength = 30 * scale;
+  const sunRayMaxLength = 50 * scale;
+  const startOffset = 8 * scale;
+  const iconOffset = 8 * scale;
+  const offsetDist = 2 * scale;
+
   return (
-    <Card className="mb-8 bg-gradient-card shadow-card">
+    <Card className="mb-8 bg-gradient-to-br from-gray-50 to-white shadow-xl">
       <CardContent className="p-3 sm:p-6">
-        <div 
+        <div
           ref={containerRef}
           className="relative flex justify-center overflow-visible pt-6 sm:pt-12"
         >
-          <svg 
-            width={dimensions.width} 
-            height={dimensions.height} 
-            ref={svgRef} 
+          <svg
+            width={dimensions.width}
+            height={dimensions.height}
+            ref={svgRef}
             style={{ overflow: "visible" }}
             className="max-w-full h-auto"
           >
-            {/* Outer white border */}
+            <defs>
+              <filter id="rayGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <filter id="textGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <filter id="flareGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
             <circle cx={center} cy={center} r={borderRadius} fill="white" className="drop-shadow-lg" />
-
-            {/* Concentric arcs */}
+            {/* Enhanced interactive sun rays design */}
             {slicesWithAngles.map((s) =>
               hoveredService === s.name && s.purchased && s.progressSteps ? (
-                s.progressSteps.map((step, idx) => {
-                  const radius = progressBaseRadius + idx * (14 * scale);
-                  const { bgPath, fgPath } = buildArc(
-                    center,
-                    center,
-                    radius,
-                    s.startAngle,
-                    s.endAngle,
-                    step.progress
-                  );
-                  return (
-                    <g key={`${s.name}-arc-${idx}`}>
-                      <path d={bgPath} fill="none" stroke="#e5e7eb" strokeWidth={8 * scale} opacity={0.3} strokeLinecap="round" />
-                      <path d={fgPath} fill="none" stroke={s.color} strokeWidth={8 * scale} strokeLinecap="round" />
-                    </g>
-                  );
-                })
+                (() => {
+                  const angleSpread = s.endAngle - s.startAngle;
+                  const raysCount = s.progressSteps!.length;
+                  const spreadStep = angleSpread / raysCount;
+                  return s.progressSteps!.map((step, idx) => {
+                    const rayAngle = s.startAngle + (idx + 0.5) * spreadStep;
+                    const startR = outerRadius + startOffset;
+                    const rayStart = polarToCartesian(center, center, startR, rayAngle);
+                    const extensionLength = sunRayMinLength + ((sunRayMaxLength - sunRayMinLength) * step.progress / 100);
+                    const endR = startR + extensionLength;
+                    const rayEnd = polarToCartesian(center, center, endR, rayAngle);
+                    const fullEndR = startR + sunRayMaxLength;
+                    const fullRayEnd = polarToCartesian(center, center, fullEndR, rayAngle);
+                    const iconR = endR + iconOffset;
+                    const iconPos = polarToCartesian(center, center, iconR, rayAngle);
+                    // Direction unit vector
+                    const dirRad = ((rayAngle - 90) * Math.PI) / 180;
+                    const ux = Math.cos(dirRad);
+                    const uy = Math.sin(dirRad);
+                    // Perpendicular offsets
+                    const getOffset = (sign: number) => ({
+                      px: sign * (-uy) * offsetDist,
+                      py: sign * ux * offsetDist,
+                    });
+                    const offLeft = getOffset(1.5);
+                    const offRight = getOffset(-1.5);
+                    const startLeft = { x: rayStart.x + offLeft.px, y: rayStart.y + offLeft.py };
+                    const endLeft = { x: rayEnd.x + offLeft.px, y: rayEnd.y + offLeft.py };
+                    const startRight = { x: rayStart.x + offRight.px, y: rayStart.y + offRight.py };
+                    const endRight = { x: rayEnd.x + offRight.px, y: rayEnd.y + offRight.py };
+                    // Lens flare positions
+                    const flareR1 = startR + extensionLength * 0.25;
+                    const flareR2 = startR + extensionLength * 0.65;
+                    const flarePos1 = polarToCartesian(center, center, flareR1, rayAngle);
+                    const flarePos2 = polarToCartesian(center, center, flareR2, rayAngle);
+                    const rayLength = Math.hypot(rayEnd.x - rayStart.x, rayEnd.y - rayStart.y);
+                    const animDelay = 0.15 * idx;
+                    const drawDur = 0.7 + animDelay;
+                    return (
+                      <g key={`${s.name}-ray-${idx}`}>
+                        {/* Background full ray with subtle pulse */}
+                        <line
+                          x1={rayStart.x}
+                          y1={rayStart.y}
+                          x2={fullRayEnd.x}
+                          y2={fullRayEnd.y}
+                          stroke="url(#rayGradient)"
+                          strokeWidth={4 * scale}
+                          strokeDasharray={`${6 * scale} ${6 * scale}`}
+                          opacity={0.3}
+                        >
+                          <animate
+                            attributeName="opacity"
+                            values="0.3;0.5;0.3"
+                            dur="2s"
+                            repeatCount="indefinite"
+                            begin={`${animDelay}s`}
+                          />
+                        </line>
+                        {/* Main progress ray with gradient and drawing animation */}
+                        <line
+                          id={`mainRay-${s.name}-${idx}`}
+                          x1={rayStart.x}
+                          y1={rayStart.y}
+                          x2={rayEnd.x}
+                          y2={rayEnd.y}
+                          stroke={`url(#rayGradient-${s.name}-${idx})`}
+                          strokeWidth={6 * scale}
+                          strokeLinecap="round"
+                          strokeDasharray={`${rayLength} ${rayLength}`}
+                          strokeDashoffset={rayLength}
+                          filter="url(#rayGlow)"
+                        >
+                          <animate
+                            attributeName="stroke-dashoffset"
+                            from={`${rayLength}`}
+                            to="0"
+                            dur={`${drawDur}s`}
+                            begin="0s"
+                            fill="freeze"
+                          />
+                          <animate
+                            attributeName="stroke-width"
+                            values={`${6 * scale};${7 * scale};${6 * scale}`}
+                            dur="1.5s"
+                            repeatCount="indefinite"
+                            begin={`${drawDur}s`}
+                          />
+                        </line>
+                        {/* Parallel accent rays with slight pulse */}
+                        <line
+                          x1={startLeft.x}
+                          y1={startLeft.y}
+                          x2={endLeft.x}
+                          y2={endLeft.y}
+                          stroke={s.color}
+                          strokeWidth={2.5 * scale}
+                          opacity={0.5}
+                          strokeLinecap="round"
+                          filter="url(#rayGlow)"
+                        >
+                          <animate
+                            attributeName="opacity"
+                            values="0.5;0.7;0.5"
+                            dur="1.8s"
+                            repeatCount="indefinite"
+                            begin={`${0.2 + animDelay}s`}
+                          />
+                        </line>
+                        <line
+                          x1={startRight.x}
+                          y1={startRight.y}
+                          x2={endRight.x}
+                          y2={endRight.y}
+                          stroke={s.color}
+                          strokeWidth={2.5 * scale}
+                          opacity={0.5}
+                          strokeLinecap="round"
+                          filter="url(#rayGlow)"
+                        >
+                          <animate
+                            attributeName="opacity"
+                            values="0.5;0.7;0.5"
+                            dur="1.8s"
+                            repeatCount="indefinite"
+                            begin={`${0.3 + animDelay}s`}
+                          />
+                        </line>
+                        {/* Lens flare effects with pulsating scale */}
+                        <circle
+                          cx={flarePos1.x}
+                          cy={flarePos1.y}
+                          r={5 * scale}
+                          fill={s.color}
+                          opacity="0"
+                          filter="url(#flareGlow)"
+                        >
+                          <animate
+                            attributeName="opacity"
+                            from="0"
+                            to="0.6"
+                            dur="0.4s"
+                            begin={`${0.3 + animDelay}s`}
+                            fill="freeze"
+                          />
+                          <animate
+                            attributeName="r"
+                            values={`${5 * scale};${6 * scale};${5 * scale}`}
+                            dur="1.5s"
+                            repeatCount="indefinite"
+                            begin={`${0.3 + animDelay}s`}
+                          />
+                        </circle>
+                        <circle
+                          cx={flarePos2.x}
+                          cy={flarePos2.y}
+                          r={4 * scale}
+                          fill={s.color}
+                          opacity="0"
+                          filter="url(#flareGlow)"
+                        >
+                          <animate
+                            attributeName="opacity"
+                            from="0"
+                            to="0.8"
+                            dur="0.4s"
+                            begin={`${0.5 + animDelay}s`}
+                            fill="freeze"
+                          />
+                          <animate
+                            attributeName="r"
+                            values={`${4 * scale};${5 * scale};${4 * scale}`}
+                            dur="1.3s"
+                            repeatCount="indefinite"
+                            begin={`${0.5 + animDelay}s`}
+                          />
+                        </circle>
+                        {/* Decorative end shape (starburst) with rotation */}
+                        <path
+                          d={`M ${rayEnd.x} ${rayEnd.y - 10 * scale} 
+                              L ${rayEnd.x + 3 * scale} ${rayEnd.y - 3 * scale} 
+                              L ${rayEnd.x + 10 * scale} ${rayEnd.y} 
+                              L ${rayEnd.x + 3 * scale} ${rayEnd.y + 3 * scale} 
+                              L ${rayEnd.x} ${rayEnd.y + 10 * scale} 
+                              L ${rayEnd.x - 3 * scale} ${rayEnd.y + 3 * scale} 
+                              L ${rayEnd.x - 10 * scale} ${rayEnd.y} 
+                              L ${rayEnd.x - 3 * scale} ${rayEnd.y - 3 * scale} Z`}
+                          fill={s.color}
+                          stroke="white"
+                          strokeWidth={1.5 * scale}
+                          opacity="0"
+                          filter="url(#rayGlow)"
+                        >
+                          <animate
+                            attributeName="opacity"
+                            from="0"
+                            to="1"
+                            dur="0.5s"
+                            begin={`${0.6 + animDelay}s`}
+                            fill="freeze"
+                          />
+                          <animateTransform
+                            attributeName="transform"
+                            type="rotate"
+                            from={`0 ${rayEnd.x} ${rayEnd.y}`}
+                            to={`360 ${rayEnd.x} ${rayEnd.y}`}
+                            dur="10s"
+                            repeatCount="indefinite"
+                            begin={`${0.6 + animDelay}s`}
+                          />
+                        </path>
+                        {/* Step icon in circle with scale animation */}
+                        <g filter="url(#rayGlow)">
+                          <circle
+                            cx={iconPos.x}
+                            cy={iconPos.y}
+                            r={9 * scale}
+                            fill="white"
+                            stroke={s.color}
+                            strokeWidth={2.5 * scale}
+                          >
+                            <animate
+                              attributeName="r"
+                              values={`${9 * scale};${10 * scale};${9 * scale}`}
+                              dur="1.7s"
+                              repeatCount="indefinite"
+                              begin={`${0.9 + animDelay}s`}
+                            />
+                          </circle>
+                          <text
+                            x={iconPos.x}
+                            y={iconPos.y}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fontSize={`${14 * scale}px`}
+                            style={{ fontWeight: "bold", fill: s.color }}
+                          >
+                            {getStepIcon(step.progress)}
+                          </text>
+                          <animate
+                            attributeName="opacity"
+                            from="0"
+                            to="1"
+                            dur="0.6s"
+                            begin={`${0.9 + animDelay}s`}
+                            fill="freeze"
+                          />
+                        </g>
+                        {/* Gradient for main ray */}
+                        <defs>
+                          <linearGradient id={`rayGradient-${s.name}-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style={{ stopColor: s.color, stopOpacity: 0.95 }} />
+                            <stop offset="50%" style={{ stopColor: s.color, stopOpacity: 0.7 }} />
+                            <stop offset="100%" style={{ stopColor: s.color, stopOpacity: 0.3 }} />
+                          </linearGradient>
+                        </defs>
+                      </g>
+                    );
+                  });
+                })()
               ) : null
             )}
+            {/* Gradient for background rays */}
+            <defs>
+              <linearGradient id="rayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: "#e5e7eb", stopOpacity: 0.8 }} />
+                <stop offset="100%" style={{ stopColor: "#d1d5db", stopOpacity: 0.2 }} />
+              </linearGradient>
+            </defs>
 
             {/* Pie slices */}
             {slicesWithAngles.map((service) => {
               const slicePath = createSlicePath(center, center, innerRadius, outerRadius, service.startAngle, service.endAngle);
               const labelPos = polarToCartesian(center, center, chartRadius, service.midAngle);
-              const useAbbr = dimensions.width < 640; // Use abbreviations only on mobile devices
+              const useAbbr = dimensions.width < 640;
               const displayName = useAbbr ? (abbrMap[service.name] || service.name) : service.name;
               const lines = displayName.split(" ");
               const maxWordLen = Math.max(...lines.map(w => w.length), 1);
-              const fontSizeNum = Math.min(10 * scale, (100 * scale) / maxWordLen); // Adjusted to fit within slices
+              const fontSizeNum = Math.min(10 * scale, (100 * scale) / maxWordLen);
               const lineHeight = fontSizeNum * 1.2;
               const n = lines.length;
               const firstDy = -((n - 1) * lineHeight / 2);
@@ -340,29 +585,31 @@ export default function ServicesPieChart({
                     style={{
                       filter:
                         hoveredService === service.name
-                          ? "brightness(1.1)"
+                          ? "brightness(1.1) drop-shadow(0 0 5px rgba(0,0,0,0.2))"
                           : !service.purchased
                           ? "brightness(0.7)"
                           : "none",
                       opacity: !service.purchased ? 0.6 : 1,
                     }}
                   />
-                  <text 
-                    x={labelPos.x} 
-                    y={iconY} 
-                    textAnchor="middle" 
+                  <text
+                    x={labelPos.x}
+                    y={iconY}
+                    textAnchor="middle"
                     dominantBaseline="central"
                     fontSize={`${iconFontSizeNum}px`}
+                    style={{ filter: "url(#textGlow)" }}
                   >
                     {service.icon}
                   </text>
-                  <text 
-                    x={labelPos.x} 
-                    y={labelPos.y} 
-                    textAnchor="middle" 
-                    dominantBaseline="central" 
+                  <text
+                    x={labelPos.x}
+                    y={labelPos.y}
+                    textAnchor="middle"
+                    dominantBaseline="central"
                     className={`text-white ${getTextSize()}`}
                     fontSize={`${fontSizeNum}px`}
+                    style={{ filter: "url(#textGlow)" }}
                   >
                     {lines.map((w, i) => (
                       <tspan key={i} x={labelPos.x} dy={i === 0 ? firstDy : lineHeight}>
@@ -374,53 +621,41 @@ export default function ServicesPieChart({
               );
             })}
 
-            {/* Inner circle */}
             <circle cx={center} cy={center} r={85 * scale} fill="white" stroke="#e5e7eb" strokeWidth={4 * scale} className="drop-shadow-md" />
-            <text 
-              x={center} 
-              y={center} 
-              textAnchor="middle" 
-              dominantBaseline="central" 
+            <text
+              x={center}
+              y={center}
+              textAnchor="middle"
+              dominantBaseline="central"
               className="font-bold text-foreground"
               fontSize={`${18 * scale}px`}
+              style={{ filter: "url(#textGlow)" }}
             >
               {studentName}
             </text>
 
-            {/* Service number & hover % */}
+            {/* Service number */}
             {slicesWithAngles.map((s) => {
               const numPos = polarToCartesian(center, center, numberRadius, s.midAngle);
               return (
                 <g key={`${s.name}-num`}>
                   <circle cx={numPos.x} cy={numPos.y} r={14 * scale} fill={s.purchased ? s.color : "#9ca3af"} stroke="white" strokeWidth={3 * scale} />
-                  <text 
-                    x={numPos.x} 
-                    y={numPos.y} 
-                    textAnchor="middle" 
-                    dominantBaseline="central" 
+                  <text
+                    x={numPos.x}
+                    y={numPos.y}
+                    textAnchor="middle"
+                    dominantBaseline="central"
                     className="font-bold text-white"
                     fontSize={`${14 * scale}px`}
+                    style={{ filter: "url(#textGlow)" }}
                   >
                     {s.number}
                   </text>
-                  {hoveredService === s.name && s.overallProgress != null && (
-                    <text 
-                      x={numPos.x} 
-                      y={numPos.y + (30 * scale)} 
-                      textAnchor="middle" 
-                      dominantBaseline="central" 
-                      className="font-bold text-gray-700"
-                      fontSize={`${14 * scale}px`}
-                    >
-                      {s.overallProgress}%
-                    </text>
-                  )}
                 </g>
               );
             })}
           </svg>
 
-          {/* Buy button */}
           {hoveredService &&
             !servicesData.find((s) => s.name === hoveredService)?.purchased && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -433,14 +668,15 @@ export default function ServicesPieChart({
                       const s = slicesWithAngles.find((x) => x.name === hoveredService);
                       if (!s) return "0,0";
                       const rad = ((s.midAngle - 90) * Math.PI) / 180;
-                      const x = (270 * scale) * Math.cos(rad);
-                      const y = (270 * scale) * Math.sin(rad);
+                      const x = (280 * scale) * Math.cos(rad);
+                      const y = (280 * scale) * Math.sin(rad);
                       return `${x}px,${y}px`;
                     })()})`,
                   }}
                 >
                   <Button
                     className="bg-blue-600 hover:bg-blue-700 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-full shadow-xl text-xs sm:text-sm"
+                    style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleServiceClick(servicesData.find((x) => x.name === hoveredService)!);
@@ -453,7 +689,6 @@ export default function ServicesPieChart({
             )}
         </div>
 
-        {/* Service status legend */}
         <div className={`grid ${getGridCols()} gap-2 sm:gap-3 lg:gap-4 mt-4 sm:mt-6 max-w-full`}>
           {servicesData.map((service) => (
             <div
@@ -464,14 +699,13 @@ export default function ServicesPieChart({
                     ? "border-green-300 bg-green-50 shadow-lg scale-105"
                     : "border-green-200 bg-gradient-to-br from-green-50 to-white shadow-md hover:shadow-lg"
                   : hoveredService === service.name
-                  ? "border-primary/30 bg-primary/10 shadow-lg scale-105"
+                  ? "border-blue-300 bg-blue-50 shadow-lg scale-105"
                   : "border-gray-200 bg-gradient-to-br from-gray-50 to-white shadow-sm hover:shadow-md"
               }`}
               onMouseEnter={() => handleServiceHover(service.name)}
               onMouseLeave={() => handleServiceHover(null)}
               onClick={() => handleServiceClick(service)}
             >
-              {/* Main service info */}
               <div className="p-2 xs:p-3 sm:p-4">
                 <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 mb-2 xs:mb-3">
                   <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3">
@@ -490,14 +724,9 @@ export default function ServicesPieChart({
                   </div>
                   <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 flex-shrink-0">
                     {service.purchased ? (
-                      <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2">
-                        <span className="text-[0.6rem] xs:text-xs font-medium bg-green-100 text-green-700 px-1 xs:px-1.5 sm:px-2 py-0.5 xs:py-1 rounded-full border border-green-200">
-                          ✓ Purchased
-                        </span>
-                        <div className="text-[0.6rem] xs:text-xs font-bold text-gray-700 bg-white px-1 xs:px-1.5 sm:px-2 py-0.5 xs:py-1 rounded-full border border-gray-200 shadow-sm">
-                          {service.overallProgress}%
-                        </div>
-                      </div>
+                      <span className="text-[0.6rem] xs:text-xs font-medium bg-green-100 text-green-700 px-1 xs:px-1.5 sm:px-2 py-0.5 xs:py-1 rounded-full border border-green-200">
+                        ✓ Purchased
+                      </span>
                     ) : (
                       <span className="text-[0.6rem] xs:text-xs font-medium bg-blue-100 text-blue-700 px-1 xs:px-1.5 sm:px-2 py-0.5 xs:py-1 rounded-full border border-blue-200">
                         Available
@@ -505,10 +734,8 @@ export default function ServicesPieChart({
                     )}
                   </div>
                 </div>
-
-                {/* Progress steps - only show on hover for purchased services */}
                 {service.purchased && hoveredService === service.name && service.progressSteps && (
-                  <div className="mt-2 xs:mt-3 sm:mt-4 space-y-1.5 xs:space-y-2 bg-white/70 backdrop-blur-sm rounded-lg p-1.5 xs:p-2 sm:p-3 border border-white/50">
+                  <div className="mt-2 xs:mt-3 sm:mt-4 space-y-1.5 xs:space-y-2 bg-white/90 backdrop-blur-sm rounded-lg p-1.5 xs:p-2 sm:p-3 border border-white/50 shadow-sm">
                     <div className="text-[0.6rem] xs:text-xs font-semibold text-gray-700 mb-1.5 xs:mb-2 flex items-center gap-1">
                       <span>Progress Steps</span>
                       <div className="h-px bg-gray-300 flex-1"></div>
@@ -517,10 +744,17 @@ export default function ServicesPieChart({
                       {service.progressSteps.map((step, i) => (
                         <div
                           key={i}
-                          className={`flex items-center justify-between p-1 xs:p-1.5 sm:p-2 rounded-lg border transition-all duration-200 ${getStepStatusColor(step.progress)}`}
+                          className={`flex items-center justify-between p-1 xs:p-1.5 sm:p-2 rounded-lg border transition-all duration-200`}
+                          style={{
+                            borderColor: getStepStatusColor(step.progress),
+                            background: "#f9fafb",
+                          }}
                         >
                           <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 min-w-0 flex-1">
-                            <span className="text-[0.6rem] xs:text-xs sm:text-sm font-medium flex-shrink-0">
+                            <span
+                              className="text-[0.6rem] xs:text-xs sm:text-sm font-medium flex-shrink-0"
+                              style={{ color: getStepStatusColor(step.progress) }}
+                            >
                               {getStepIcon(step.progress)}
                             </span>
                             <span className="text-[0.6rem] xs:text-xs font-medium truncate">
@@ -528,20 +762,16 @@ export default function ServicesPieChart({
                             </span>
                           </div>
                           <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 flex-shrink-0">
-                            {/* Mini progress bar */}
                             <div className="w-10 xs:w-12 sm:w-16 h-1 xs:h-1.5 bg-gray-200 rounded-full overflow-hidden">
                               <div
-                                className={`h-full transition-all duration-300 ${
-                                  step.progress === 100
-                                    ? "bg-green-500"
-                                    : step.progress > 0
-                                    ? "bg-amber-500"
-                                    : "bg-gray-300"
-                                }`}
-                                style={{ width: `${step.progress}%` }}
+                                className={`h-full transition-all duration-300`}
+                                style={{
+                                  width: `${step.progress}%`,
+                                  backgroundColor: getStepStatusColor(step.progress),
+                                }}
                               ></div>
                             </div>
-                            <span className="text-[0.6rem] xs:text-xs font-bold min-w-[20px] xs:min-w-[24px] sm:min-w-[28px] text-right">
+                            <span className="text-[0.6rem] xs:text-xs font-bold min-w-[20px] xs:min-w-[24px] sm:min-w-[28px] text-right" style={{ color: getStepStatusColor(step.progress) }}>
                               {step.progress}%
                             </span>
                           </div>
@@ -551,8 +781,6 @@ export default function ServicesPieChart({
                   </div>
                 )}
               </div>
-
-              {/* Hover indicator */}
               {hoveredService === service.name && (
                 <div className="absolute top-1 xs:top-2 right-1 xs:right-2">
                   <div className="w-1.5 xs:w-2 h-1.5 xs:h-2 bg-blue-500 rounded-full animate-pulse"></div>
