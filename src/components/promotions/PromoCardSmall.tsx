@@ -2,12 +2,12 @@ import React from "react";
 import { Button } from "../ui/button";
 import { ArrowRight } from "lucide-react";
 
-interface PromoCardSmallProps {
+interface PromoCardSmallProps extends React.HTMLAttributes<HTMLDivElement> {
   imageUrl: string;
   title: string;
   subtitle: string;
   buttonText?: string;
-  minHeight?: string; // optional to control height
+  minHeight?: string;
 }
 
 const PromoCardSmall: React.FC<PromoCardSmallProps> = ({
@@ -16,10 +16,16 @@ const PromoCardSmall: React.FC<PromoCardSmallProps> = ({
   subtitle,
   buttonText = "Explore Now",
   minHeight = "h-[250px] xs:h-[300px] sm:h-[350px]",
+  className, // ✅ Now TypeScript knows about this
+  ...rest // spread remaining props
 }) => {
+  const heightClass = minHeight ? minHeight : "";
   return (
     <div
-      className={`relative rounded-2xl overflow-hidden shadow-md ${minHeight}`}
+      className={`relative rounded-2xl overflow-hidden shadow-md ${heightClass} ${
+        className ?? ""
+      }`}
+      {...rest}
     >
       {/* Background image */}
       <img
@@ -35,7 +41,9 @@ const PromoCardSmall: React.FC<PromoCardSmallProps> = ({
       <div className="relative z-10 flex flex-col justify-between h-full p-4 xs:p-5 sm:p-6 text-white">
         <div className="space-y-2 xs:space-y-3 sm:space-y-4">
           <h3 className="font-bold text-lg xs:text-xl sm:text-2xl">{title}</h3>
-          <p className="text-xs xs:text-sm sm:text-base text-gray-200">{subtitle}</p>
+          <p className="text-xs xs:text-sm sm:text-base text-gray-200">
+            {subtitle}
+          </p>
         </div>
 
         {/* CTA Button */}
