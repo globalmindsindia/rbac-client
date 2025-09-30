@@ -18,6 +18,7 @@ export function AdminSidebar() {
   const { open } = useSidebar();
   const { selectedApp } = useAuth();
   const userRole = selectedApp?.role; // current user's role
+  // console.log(userRole);
 
   return (
     <Sidebar collapsible="icon">
@@ -26,7 +27,9 @@ export function AdminSidebar() {
           <img
             src={companyLogo}
             alt="Company Logo"
-            className={`mx-auto ${open ? "w-52" : "w-24"} h-auto transition-all duration-300`}
+            className={`mx-auto ${
+              open ? "w-52" : "w-24"
+            } h-auto transition-all duration-300`}
           />
           <hr className="border-t border-border w-full mt-2" />
         </div>

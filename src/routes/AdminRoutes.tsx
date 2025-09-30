@@ -1,4 +1,3 @@
-import { Route } from "react-router-dom";
 import EmployeeDashboard from "@/pages/admin/employee/EmployeeDashboard";
 import { ProtectedRoute } from "./ProtectedRoute";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -6,61 +5,90 @@ import RolesManagement from "@/pages/admin/RolesManagement";
 import ApplicationManagement from "@/pages/admin/ApplicationManagement";
 import CourseManagement from "@/pages/admin/course/CourseManagement";
 import LeadsManagement from "@/pages/admin/leads/LeadsManagement";
+import UserManagement from "@/pages/admin/UserManagement";
+import ResourceManagement from "@/pages/admin/ResourceManagement";
+import PermissionManagement from "@/pages/admin/PermissionManagement";
+import SopGenerator from "@/pages/admin/employee/SopGenerator";
 
 export const AdminRoutes = [
-  <Route
-    key="admin-dashboard"
-    path="/admin/dashboard"
-    element={
+  {
+    path: "/admin/dashboard",
+    element: (
       <ProtectedRoute>
         <AdminDashboard />
       </ProtectedRoute>
-    }
-  />,
-  <Route
-    key="roles-management"
-    path="/admin/roles-management"
-    element={
+    ),
+  },
+  {
+    path: "/admin/roles-management",
+    element: (
       <ProtectedRoute>
         <RolesManagement />
       </ProtectedRoute>
-    }
-  />,
-  <Route
-    key="application-management"
-    path="/admin/application-management"
-    element={
+    ),
+  },
+  {
+    path: "/admin/application-management",
+    element: (
       <ProtectedRoute>
         <ApplicationManagement />
       </ProtectedRoute>
-    }
-  />,
-  <Route
-    key="employee-dashboard"
-    path="/employee/dashboard"
-    element={
+    ),
+  },
+  {
+    path: "/employee/dashboard",
+    element: (
       <ProtectedRoute>
         <EmployeeDashboard />
       </ProtectedRoute>
-    }
-  />,
-
-  <Route
-    key="course-management"
-    path="/course/course-management"
-    element={
+    ),
+  },
+  {
+    path: "/course/course-management",
+    element: (
       <ProtectedRoute>
         <CourseManagement />
       </ProtectedRoute>
-    }
-  />,
-  <Route
-    key="lead-management"
-    path="/lead/lead-management"
-    element={
+    ),
+  },
+  {
+    path: "/lead/lead-management",
+    element: (
       <ProtectedRoute>
         <LeadsManagement />
       </ProtectedRoute>
-    }
-  />,
+    ),
+  },
+  {
+    path: "/admin/user-management",
+    element: (
+      <ProtectedRoute>
+        <UserManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/admin/resource-management",
+    element: (
+      <ProtectedRoute>
+        <ResourceManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/admin/permission-management",
+    element: (
+      <ProtectedRoute>
+        <PermissionManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/admin/sop-generator",
+    element: (
+      <ProtectedRoute>
+        <SopGenerator />
+      </ProtectedRoute>
+    ),
+  },
 ];

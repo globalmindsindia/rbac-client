@@ -6,8 +6,8 @@ interface AppInfo {
   role: string;
   domainUrl?: string;
 }
-
 interface UserInfo {
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -17,7 +17,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user?: UserInfo;
   selectedApp?: AppInfo;
-  login: (payload: any) => void; // Accept raw payload (manual or Zoho)
+  apps?: AppInfo[];
+  permissions?: string[];
+  login: (payload: any) => string; // returns internal redirect path (or "/")
   setSelectedApp: (app: AppInfo) => void;
   logout: () => void;
   loading: boolean;
@@ -27,8 +29,8 @@ export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
-const MAX_SESSION_DURATION = 3 * 60 * 60 * 1000; // 3h in ms
-const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30m in ms
+const MAX_SESSION_DURATION = 3 * 60 * 60 * 1000; // 3 hours
+const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -37,167 +39,171 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedApp, setSelectedAppState] = useState<AppInfo | undefined>(
     undefined
   );
+  const [apps, setAppsState] = useState<AppInfo[] | undefined>(undefined);
+  const [permissions, setPermissionsState] = useState<string[] | undefined>(
+    undefined
+  );
   const [loading, setLoading] = useState(true);
 
   const logout = () => {
     setUserState(undefined);
     setSelectedAppState(undefined);
+    setAppsState(undefined);
+    setPermissionsState(undefined);
     localStorage.removeItem("userInfo");
     localStorage.removeItem("selectedApp");
+    localStorage.removeItem("apps");
+    localStorage.removeItem("permissions");
     localStorage.removeItem("loginTime");
     localStorage.removeItem("lastActivity");
+    // Let the router/page decide where to go if needed, avoid hard reloads
   };
 
-  // Normalize payload from any login source
-  const normalizeAuthPayload = (
-    payload: any
-  ): { user: UserInfo; selectedApp?: AppInfo } => {
-    if (payload.user && payload.app) {
-      return { user: payload.user, selectedApp: payload.app };
-    }
-
-    if (payload.user) {
+  const normalizeAuthPayload = (payload: any) => {
+    if (payload?.data) {
+      const d = payload.data;
       const user: UserInfo = {
+        id: d.user.id,
+        email: d.user.email,
+        firstName: d.user.firstName,
+        lastName: d.user.lastName,
+      };
+      const app: AppInfo | undefined = d.app
+        ? {
+            appId: d.app.appId,
+            appName: d.app.appName,
+            role: d.app.role,
+            domainUrl: d.app.domainUrl,
+          }
+        : undefined;
+      const permissions: string[] | undefined = d.permissions;
+      const apps: AppInfo[] | undefined = d.apps;
+      const redirect: string | undefined = d.redirect;
+      return { user, selectedApp: app, permissions, apps, redirect };
+    }
+    if (payload?.user) {
+      const user: UserInfo = {
+        id: payload.user.id,
+        email: payload.user.email,
         firstName: payload.user.firstName,
         lastName: payload.user.lastName,
-        email: payload.user.email,
       };
-
-      let selectedApp: AppInfo | undefined;
-      if (payload.user.userRoles?.length > 0) {
-        const firstRole = payload.user.userRoles[0];
-        selectedApp = {
-          appId: firstRole.app.id,
-          appName: firstRole.app.name,
-          role: firstRole.role.name,
-          domainUrl: firstRole.app.domain_url,
-        };
-      }
-
-      return { user, selectedApp };
+      const app: AppInfo | undefined = payload.app
+        ? {
+            appId: payload.app.appId,
+            appName: payload.app.appName,
+            role: payload.app.role,
+            domainUrl: payload.app.domainUrl,
+          }
+        : undefined;
+      return {
+        user,
+        selectedApp: app,
+        permissions: payload.permissions,
+        apps: payload.apps,
+        redirect: payload.redirect,
+      };
     }
-
     throw new Error("Unknown payload format");
   };
 
-  // Login method: accepts manual or Zoho payload
-  const login = (payload: any) => {
-    try {
-      const { user, selectedApp } = normalizeAuthPayload(payload);
+  const decideRedirect = (permissions?: string[]): string | null => {
+    if (!permissions) return null;
+    if (permissions.includes("manage:users")) return "/admin/dashboard";
+    if (permissions.includes("manage:students")) return "/employee/dashboard";
+    if (permissions.includes("read:students")) return "/student/dashboard";
+    return null;
+  };
 
-      setUserState(user);
-      localStorage.setItem("userInfo", JSON.stringify(user));
-
-      if (selectedApp) {
-        setSelectedAppState(selectedApp);
-        localStorage.setItem("selectedApp", JSON.stringify(selectedApp));
-      }
-
-      const now = Date.now();
-      localStorage.setItem("loginTime", now.toString());
-      localStorage.setItem("lastActivity", now.toString());
-    } catch (err) {
-      console.error("Failed to login:", err);
+  // Best-practice login: persist first, return redirect path; do not navigate here
+  const login = (raw: any): string => {
+    const { user, selectedApp, apps, permissions, redirect } =
+      normalizeAuthPayload(raw);
+    setUserState(user);
+    localStorage.setItem("userInfo", JSON.stringify(user));
+    if (selectedApp) {
+      setSelectedAppState(selectedApp);
+      localStorage.setItem("selectedApp", JSON.stringify(selectedApp));
     }
+    if (apps) {
+      setAppsState(apps);
+      localStorage.setItem("apps", JSON.stringify(apps));
+    }
+    if (permissions) {
+      setPermissionsState(permissions);
+      localStorage.setItem("permissions", JSON.stringify(permissions));
+    }
+    const now = Date.now();
+    localStorage.setItem("loginTime", now.toString());
+    localStorage.setItem("lastActivity", now.toString());
+    // Prefer backend-provided redirect if present, else permission-derived
+    return redirect && redirect.startsWith("/")
+      ? redirect
+      : decideRedirect(permissions) || "/";
   };
 
-  const setSelectedApp = (app: AppInfo) => {
-    setSelectedAppState(app);
-    localStorage.setItem("selectedApp", JSON.stringify(app));
-  };
-
-  // Load user + validate session
+  // Restore session on mount with timing checks
   useEffect(() => {
     const storedUser = localStorage.getItem("userInfo");
     const storedApp = localStorage.getItem("selectedApp");
+    const storedApps = localStorage.getItem("apps");
+    const storedPermissions = localStorage.getItem("permissions");
     const loginTime = localStorage.getItem("loginTime");
     const lastActivity = localStorage.getItem("lastActivity");
     const now = Date.now();
-
     if (storedUser && loginTime) {
       const sessionDuration = now - parseInt(loginTime);
       const inactivityDuration = lastActivity
         ? now - parseInt(lastActivity)
         : 0;
-
       if (
         sessionDuration > MAX_SESSION_DURATION ||
         inactivityDuration > INACTIVITY_LIMIT
       ) {
-        logout(); // Expired
+        logout();
       } else {
         try {
           setUserState(JSON.parse(storedUser));
-        } catch (e) {
-          console.error("Failed to parse userInfo:", e);
-        }
-        if (storedApp) {
-          try {
-            setSelectedAppState(JSON.parse(storedApp));
-          } catch (e) {
-            console.error("Failed to parse selectedApp:", e);
-          }
+          if (storedApp) setSelectedAppState(JSON.parse(storedApp));
+          if (storedApps) setAppsState(JSON.parse(storedApps));
+          if (storedPermissions)
+            setPermissionsState(JSON.parse(storedPermissions));
+        } catch {
+          logout();
         }
       }
     }
-
     setLoading(false);
   }, []);
 
   // Track activity
   useEffect(() => {
     if (!user) return;
-
-    const updateActivity = () => {
+    const update = () =>
       localStorage.setItem("lastActivity", Date.now().toString());
-    };
-
-    window.addEventListener("mousemove", updateActivity);
-    window.addEventListener("keydown", updateActivity);
-    window.addEventListener("click", updateActivity);
-
+    window.addEventListener("mousemove", update);
+    window.addEventListener("keydown", update);
+    window.addEventListener("click", update);
     return () => {
-      window.removeEventListener("mousemove", updateActivity);
-      window.removeEventListener("keydown", updateActivity);
-      window.removeEventListener("click", updateActivity);
+      window.removeEventListener("mousemove", update);
+      window.removeEventListener("keydown", update);
+      window.removeEventListener("click", update);
     };
   }, [user]);
-
-  // Optional: auto-check timer (so logout happens while user is idle on screen)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const loginTime = localStorage.getItem("loginTime");
-      const lastActivity = localStorage.getItem("lastActivity");
-      const now = Date.now();
-
-      if (loginTime) {
-        const sessionDuration = now - parseInt(loginTime);
-        const inactivityDuration = lastActivity
-          ? now - parseInt(lastActivity)
-          : 0;
-
-        if (
-          sessionDuration > MAX_SESSION_DURATION ||
-          inactivityDuration > INACTIVITY_LIMIT
-        ) {
-          logout();
-        }
-      }
-    }, 60 * 1000); // check every minute
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const isAuthenticated = !!user;
 
   return (
     <AuthContext.Provider
       value={{
-        isAuthenticated,
+        isAuthenticated: !!user,
         user,
         selectedApp,
+        apps,
+        permissions,
         login,
-        setSelectedApp,
+        setSelectedApp: (app) => {
+          setSelectedAppState(app);
+          localStorage.setItem("selectedApp", JSON.stringify(app));
+        },
         logout,
         loading,
       }}
@@ -207,9 +213,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Custom hook
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 };

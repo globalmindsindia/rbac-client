@@ -9,6 +9,9 @@ import {
   HelpCircle,
   BookOpen,
   ShoppingCart,
+  User,
+  Cog,
+  PencilRuler,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -35,16 +38,34 @@ export const menuConfig: MenuSection[] = [
         roles: ["Super Admin", "Admin"],
       },
       {
-        title: "Roles",
+        title: "Resource Management",
+        url: "/admin/resource-management",
+        icon: Cog,
+        roles: ["Super Admin"],
+      },
+      {
+        title: "Permission Management",
+        url: "/admin/permission-management",
+        icon: Cog,
+        roles: ["Super Admin"],
+      },
+      {
+        title: "Roles Management",
         url: "/admin/roles-management",
         icon: Shield,
         roles: ["Super Admin"],
       },
       {
-        title: "Applications",
+        title: "Apps Management",
         url: "/admin/application-management",
         icon: BarChart3,
         roles: ["Super Admin"],
+      },
+      {
+        title: "Users Management",
+        url: "/admin/user-management",
+        icon: User,
+        roles: ["Super Admin", "Sop Admin"],
       },
       {
         title: "Course Management",
@@ -64,7 +85,13 @@ export const menuConfig: MenuSection[] = [
         title: "Dashboard",
         url: "/employee/dashboard",
         icon: Home,
-        roles: ["Employee"],
+        roles: ["Employee", "SOP_ADMIN"],
+      },
+      {
+        title: "SOP Generator",
+        url: "/admin/sop-generator",
+        icon: PencilRuler,
+        roles: ["Super Admin", "SOP_ADMIN"],
       },
 
       // student menu

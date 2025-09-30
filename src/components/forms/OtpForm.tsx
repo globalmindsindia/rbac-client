@@ -78,7 +78,7 @@ const OtpForm: React.FC<OtpFormProps> = ({ email }) => {
         login(verifyData);
 
         // Redirect user
-        navigate(verifyData.redirect || "/");
+        // navigate(verifyData.redirect || "/");
       } else {
         toast({
           title: "Login failed",
