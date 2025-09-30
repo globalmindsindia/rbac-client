@@ -44,20 +44,14 @@ import Questionnaire from "./Questionnaire";
 // PDF.js
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-
-// jsPDF
-import { jsPDF } from "jspdf";
-
-// docx
-import { Document, Packer, Paragraph, TextRun } from "docx";
-
 // Configure pdf.js worker
 GlobalWorkerOptions.workerSrc = pdfWorker;
 
-type Step = "university" | "resume" | "questions" | "quality_check" | "result";
+type Step = "university" | "resume" | "questions" | "result";
 
 // Shared type from types; keep single source of truth
 import type { AppFormData as SopAppFormData } from "@/types/sop.types";
+import CreatableCombobox from "./CreatableCombobox";
 
 // Extend for UI-only fields, index signature preserved
 type UIAppFormData = SopAppFormData & { experience?: string };
@@ -111,20 +105,14 @@ function ConfirmNavigation({
 }
 
 export default function SOPGenerator() {
-  const steps: Step[] = [
-    "university",
-    "resume",
-    "questions",
-    "quality_check",
-    "result",
-  ];
+  const steps: Step[] = ["university", "resume", "questions", "result"];
   const { toast } = useToast();
 
   const initialFormData = {
     name: "",
     email: "",
     phone: "",
-    country: "",
+    country: "Germany",
     university: "",
     course: "",
     resume: null,
@@ -172,57 +160,6 @@ export default function SOPGenerator() {
     );
   }, [currentStep, steps, sopId, generatedSOP]);
 
-  function downloadBlob(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function downloadTxt(name: string, text: string) {
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    downloadBlob(blob, `${name}.txt`);
-  }
-
-  function downloadPdf(name: string, text: string) {
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const margin = 40;
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const maxWidth = doc.internal.pageSize.getWidth() - margin * 2;
-    const lines = doc.splitTextToSize(text, maxWidth);
-    let y = margin;
-    const lineHeight = 16;
-    lines.forEach((line: string) => {
-      if (y + lineHeight > pageHeight - margin) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.text(line, margin, y);
-      y += lineHeight;
-    });
-    doc.save(`${name}.pdf`);
-  }
-
-  async function downloadDocx(name: string, text: string) {
-    const paragraphs = text.split(/\n{2,}/).map(
-      (block) =>
-        new Paragraph({
-          children: block
-            .split("\n")
-            .map((line) => new TextRun({ text: line, break: 1 })),
-        })
-    );
-    const doc = new Document({
-      sections: [{ properties: {}, children: paragraphs }],
-    });
-    const blob = await Packer.toBlob(doc);
-    downloadBlob(blob, `${name}.docx`);
-  }
-
   async function extractPdfTextFromUrl(url: string) {
     const arrayBuffer = await fetch(url).then((r) => r.arrayBuffer());
     const pdf = await getDocument({ data: arrayBuffer }).promise;
@@ -243,12 +180,14 @@ export default function SOPGenerator() {
   ) {
     try {
       setLoading(true);
+
       const fullAnswers = {
         ...answersFromQuestionnaire,
         "Preffered length": formData.preffered_length || "450",
         "specific requirements":
           formData.specific_requirements || "Do whatever you want",
       };
+
       const payload = {
         name: formData.name || "",
         email: formData.email || "",
@@ -258,45 +197,80 @@ export default function SOPGenerator() {
         course: formData.course || "",
         answers: fullAnswers,
       };
+
       const fd = new FormData();
       fd.append("data", JSON.stringify(payload));
       if (formData.resume) fd.append("resume", formData.resume);
 
       const { id } = await sopService.submitSop(fd);
       setSopId(id);
-      setPolling(true);
-      pollQualityCheck(id);
+
+      // Directly finalize without quality check
+      try {
+        const pdfBlob = await sopService.finalize(id);
+        const url = window.URL.createObjectURL(
+          new Blob([pdfBlob], { type: "application/pdf" })
+        );
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `sop_${id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setOriginalPdfPath(url);
+        setCurrentStep("result");
+        toast({ title: "SOP ready", description: `SOP ID: ${id}` });
+      } catch {
+        // Fallback: some backends require an improvement payload first
+        await sopService.improvementSuggestions(id, {
+          improvement_answers: {} as Record<string, string>,
+        });
+        const pdfBlob = await sopService.finalize(id);
+        const url = window.URL.createObjectURL(
+          new Blob([pdfBlob], { type: "application/pdf" })
+        );
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `sop_${id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setOriginalPdfPath(url);
+        setCurrentStep("result");
+        toast({ title: "SOP ready", description: `SOP ID: ${id}` });
+      }
     } catch (e) {
       handleError(e, toast);
     } finally {
       setLoading(false);
+      setPolling(false);
     }
   }
 
-  async function pollQualityCheck(id: number, attempt = 0) {
-    const maxAttempts = 10,
-      delay = 3000;
-    try {
-      const res = await sopService.sopQualityCheck(id);
-      if (res.success && res.data?.phase === "quality_check") {
-        setPolling(false);
-        setQualityScore(res.data.quality_result.current_score);
-        const qs: string[] = res.data.quality_result.questions_to_improve || [];
-        setQualityQuestions(qs);
-        const init: Record<string, string> = {};
-        qs.forEach((q) => (init[q] = ""));
-        setImprovementAnswers(init);
-        setCurrentStep("quality_check");
-        return;
-      }
-      if (attempt < maxAttempts)
-        setTimeout(() => pollQualityCheck(id, attempt + 1), delay);
-      else setPolling(false);
-    } catch (err) {
-      setPolling(false);
-      handleError(err, toast);
-    }
-  }
+  // async function pollQualityCheck(id: number, attempt = 0) {
+  //   const maxAttempts = 10,
+  //     delay = 3000;
+  //   try {
+  //     const res = await sopService.sopQualityCheck(id);
+  //     if (res.success && res.data?.phase === "quality_check") {
+  //       setPolling(false);
+  //       setQualityScore(res.data.quality_result.current_score);
+  //       const qs: string[] = res.data.quality_result.questions_to_improve || [];
+  //       setQualityQuestions(qs);
+  //       const init: Record<string, string> = {};
+  //       qs.forEach((q) => (init[q] = ""));
+  //       setImprovementAnswers(init);
+  //       setCurrentStep("quality_check");
+  //       return;
+  //     }
+  //     if (attempt < maxAttempts)
+  //       setTimeout(() => pollQualityCheck(id, attempt + 1), delay);
+  //     else setPolling(false);
+  //   } catch (err) {
+  //     setPolling(false);
+  //     handleError(err, toast);
+  //   }
+  // }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
@@ -354,7 +328,6 @@ export default function SOPGenerator() {
     university: "",
     resume: "Upload Your Resume 📄",
     questions: "Tell Us About Yourself ✨",
-    quality_check: "Additional Questions ❓",
     result: "Your SOP ✍️",
   };
 
@@ -373,96 +346,86 @@ export default function SOPGenerator() {
         return formData.resume !== null;
       case "questions":
         return sopId !== null;
-      case "quality_check":
-        return qualityCheckCompleted;
       case "result":
         return true;
-      default:
-        return false;
     }
   };
 
   const universityData = {
-    USA: {
-      universities: [
-        "Harvard University",
-        "Stanford University",
-        "MIT",
-        "UC Berkeley",
-        "Yale University",
-        "Princeton University",
-      ],
-      courses: [
-        "Computer Science",
-        "Business Administration",
-        "Engineering",
-        "Medicine",
-        "Law",
-        "Economics",
-        "Psychology",
-        "International Relations",
-      ],
-    },
-    UK: {
-      universities: [
-        "Oxford University",
-        "Cambridge University",
-        "Imperial College London",
-        "London School of Economics",
-        "University College London",
-      ],
-      courses: [
-        "Law",
-        "Medicine",
-        "Economics",
-        "Political Science",
-        "Data Science",
-        "Engineering",
-        "Psychology",
-      ],
-    },
-    Canada: {
-      universities: [
-        "University of Toronto",
-        "McGill University",
-        "University of British Columbia",
-        "University of Waterloo",
-        "McMaster University",
-      ],
-      courses: [
-        "Computer Science",
-        "Engineering",
-        "Medicine",
-        "Environmental Science",
-        "Business Administration",
-        "Data Analytics",
-      ],
-    },
-    Australia: {
-      universities: [
-        "University of Melbourne",
-        "Australian National University",
-        "University of Sydney",
-        "University of Queensland",
-        "Monash University",
-      ],
-      courses: [
-        "Marine Biology",
-        "Engineering",
-        "Business Management",
-        "Medicine",
-        "Law",
-        "Computer Science",
-        "Architecture",
-      ],
-    },
     Germany: {
       universities: [
-        "Technical University of Munich",
+        "Carl Benz School",
+        "Charité - Universitätsmedizin Berlin",
+        "Constructor University",
+        "ESMT Berlin",
+        "FAU WiSo Nuremberg",
+        "Freie Universität Berlin",
+        "Furtwangen University",
+        "Goethe University Frankfurt",
         "Heidelberg University",
-        "Humboldt University of Berlin",
+        "Hochschule Bielefeld",
+        "Humboldt-Universität zu Berlin",
+        "Justus Liebig University Giessen",
+        "Karlsruhe Institute of Technology (KIT)",
+        "LMU Munich",
+        "Leibniz Universität Hannover",
+        "Leuphana University Lüneburg",
+        "Munich University of Applied Sciences",
+        "OTH Regensburg",
+        "RWTH Business School",
+        "Ruhr-Universität Bochum",
+        "TU Dortmund University",
+        "Technical University of Munich (TUM)",
+        "Technische Universität Berlin",
+        "Technische Universität Dresden",
+        "University of Cologne",
         "University of Freiburg",
-        "RWTH Aachen University",
+        "University of Göttingen",
+        "University of Hohenheim",
+        "University of Kassel",
+        "University of Konstanz",
+        "University of Mannheim",
+        "University of Münster",
+        "University of Passau",
+        "University of Potsdam",
+        "University of Stuttgart",
+        "University of Tübingen",
+        "Universität Hamburg",
+        "Universität Regensburg",
+        "Bard College Berlin",
+        "Berlin School of Business and Innovation",
+        "Bucerius Law School (not initially listed—add here as known reputable private law school)",
+        "CBS International Business School (Cologne)",
+        "CODE University of Applied Sciences",
+        "Charité – Universitätsmedizin Berlin",
+        "Cologne Business School",
+        "EBS Universität für Wirtschaft und Recht",
+        "FOM Hochschule für Oekonomie und Management",
+        "Fachhochschule Wedel",
+        "Frankfurt School of Finance & Management",
+        "Fresenius University of Applied Sciences",
+        "GISMA Business School",
+        "HHL Leipzig Graduate School of Management",
+        "Hamburger Fern-Hochschule (from broader lists)",
+        "Hertie School of Governance",
+        "Hochschule Fresenius (Idstein & various campuses)",
+        "IST-Hochschule für Management (Düsseldorf)",
+        "IU International University of Applied Sciences",
+        "IU Internationale Hochschule (Erfurt)",
+        "International School of Management (ISM) (from standyou list)",
+        "Jacobs University Bremen (now Constructor University)",
+        "Katholische Universität Eichstätt-Ingolstadt",
+        "Kühne Logistics University (KLU)",
+        "Munich Business School",
+        "Quadriga University of Applied Sciences Berlin (from broader lists)",
+        "SRH Hochschulen (Heidelberg)",
+        "Steinbeis-Hochschule Berlin",
+        "University of Applied Sciences Europe (Iserlohn)",
+        "University of Europe for Applied Sciences",
+        "Universität Witten/Herdecke",
+        "WHU – Otto Beisheim School of Management",
+        "Wilhelm Büchner University of Applied Sciences",
+        "Zeppelin University",
       ],
       courses: [
         "Mechanical Engineering",
@@ -490,8 +453,7 @@ export default function SOPGenerator() {
     { key: "university", label: "University", index: 1 },
     { key: "resume", label: "Resume", index: 2 },
     { key: "questions", label: "Questions", index: 3 },
-    { key: "quality_check", label: "Quality", index: 4 },
-    { key: "result", label: "Result", index: 5 },
+    { key: "result", label: "Result", index: 4 },
   ];
 
   const safeScore = Math.max(0, Math.min(100, qualityScore ?? 0));
@@ -690,54 +652,42 @@ export default function SOPGenerator() {
                       >
                         University
                       </Label>
-                      <Select
-                        value={formData.university}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, university: value })
-                        }
+                      <CreatableCombobox
                         disabled={!formData.country}
-                      >
-                        <SelectTrigger className="rounded-xl border-border bg-input">
-                          <SelectValue placeholder="Select university" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {formData.country &&
-                            universityData[
-                              formData.country as keyof typeof universityData
-                            ].universities.map((uni) => (
-                              <SelectItem key={uni} value={uni}>
-                                {uni}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                        value={formData.university}
+                        onChange={(val) =>
+                          setFormData({ ...formData, university: val })
+                        }
+                        options={
+                          formData.country
+                            ? universityData[
+                                formData.country as keyof typeof universityData
+                              ].universities
+                            : []
+                        }
+                        placeholder="Search or enter university"
+                      />
                     </div>
 
                     <div className="flex flex-col space-y-2">
                       <Label htmlFor="course" className="text-sm font-medium">
                         Course/Program
                       </Label>
-                      <Select
-                        value={formData.course}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, course: value })
-                        }
+                      <CreatableCombobox
                         disabled={!formData.country}
-                      >
-                        <SelectTrigger className="rounded-xl border-border bg-input">
-                          <SelectValue placeholder="Select program" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {formData.country &&
-                            universityData[
-                              formData.country as keyof typeof universityData
-                            ].courses.map((course) => (
-                              <SelectItem key={course} value={course}>
-                                {course}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                        value={formData.course}
+                        onChange={(val) =>
+                          setFormData({ ...formData, course: val })
+                        }
+                        options={
+                          formData.country
+                            ? universityData[
+                                formData.country as keyof typeof universityData
+                              ].courses
+                            : []
+                        }
+                        placeholder="Search or enter course"
+                      />
                     </div>
                   </div>
                 </div>
@@ -786,7 +736,7 @@ export default function SOPGenerator() {
                 />
               )}
 
-              {currentStep === "quality_check" && (
+              {/* {currentStep === "quality_check" && (
                 <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
                   <div className="mb-8 text-center">
                     <h2 className="text-2xl font-semibold text-gray-800 mb-2">
@@ -864,7 +814,7 @@ export default function SOPGenerator() {
                     </Button>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* UPDATED RESULT STEP ONLY */}
               {currentStep === "result" && (
@@ -935,7 +885,7 @@ export default function SOPGenerator() {
                     Previous
                   </Button>
 
-                  {currentStep === "quality_check" ? (
+                  {currentStep === "questions" ? (
                     <div />
                   ) : (
                     <Button
