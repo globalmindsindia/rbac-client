@@ -2,8 +2,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  // baseURL: "https://api.sop.globalmindsindia.in", // Flask backend base URL
-  baseURL: "http://127.0.0.1:5000", // Flask backend base URL
+  baseURL: "https://api.sop.globalmindsindia.in", // Flask backend base URL
+  // baseURL: "http://127.0.0.1:5000", // Flask backend base URL
   headers: {
     "Content-Type": "application/json",
   },
