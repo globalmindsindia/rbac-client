@@ -10,15 +10,25 @@ import {
   BookOpen,
   ShoppingCart,
   User,
-  Cog,
+  LayoutDashboard,
+  ClipboardList,
+  Key,
+  AppWindow,
+  UserCog,
+  GraduationCap,
+  PhoneCall,
+  Wrench,
   PencilRuler,
+  FolderCog,
+  Database,
 } from "lucide-react";
 
 export interface MenuItem {
   title: string;
   url: string;
   icon: any;
-  roles?: string[]; // optional: which roles can access
+  roles?: string[];
+  permissions?: string[];
 }
 
 export interface MenuSection {
@@ -30,23 +40,23 @@ export const menuConfig: MenuSection[] = [
   {
     label: "Main",
     items: [
-      // admin menu
       {
         title: "Dashboard",
         url: "/admin/dashboard",
-        icon: Home,
+        icon: LayoutDashboard,
         roles: ["Super Admin", "Admin"],
+        permissions: ["read:dashboard"],
       },
       {
         title: "Resource Management",
         url: "/admin/resource-management",
-        icon: Cog,
+        icon: Database,
         roles: ["Super Admin"],
       },
       {
         title: "Permission Management",
         url: "/admin/permission-management",
-        icon: Cog,
+        icon: Key,
         roles: ["Super Admin"],
       },
       {
@@ -58,33 +68,31 @@ export const menuConfig: MenuSection[] = [
       {
         title: "Apps Management",
         url: "/admin/application-management",
-        icon: BarChart3,
+        icon: AppWindow,
         roles: ["Super Admin"],
       },
       {
         title: "Users Management",
         url: "/admin/user-management",
-        icon: User,
+        icon: Users,
         roles: ["Super Admin", "Sop Admin"],
       },
       {
         title: "Course Management",
         url: "/course/course-management",
-        icon: BookOpen,
+        icon: GraduationCap,
         roles: ["Super Admin"],
       },
       {
         title: "Lead Management",
         url: "/lead/lead-management",
-        icon: BookOpen,
+        icon: PhoneCall,
         roles: ["Super Admin"],
       },
-
-      // employee menu
       {
         title: "Dashboard",
         url: "/employee/dashboard",
-        icon: Home,
+        icon: LayoutDashboard,
         roles: ["Employee", "SOP_ADMIN"],
       },
       {
@@ -93,12 +101,10 @@ export const menuConfig: MenuSection[] = [
         icon: PencilRuler,
         roles: ["Super Admin", "SOP_ADMIN"],
       },
-
-      // student menu
       {
         title: "Dashboard",
         url: "/student/dashboard",
-        icon: Home,
+        icon: LayoutDashboard,
         roles: ["Student"],
       },
       {

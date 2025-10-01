@@ -18,7 +18,6 @@ export function AdminSidebar() {
   const { open } = useSidebar();
   const { selectedApp } = useAuth();
   const userRole = selectedApp?.role; // current user's role
-  // console.log(userRole);
 
   return (
     <Sidebar collapsible="icon">

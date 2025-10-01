@@ -19,10 +19,16 @@ interface AuthContextType {
   selectedApp?: AppInfo;
   apps?: AppInfo[];
   permissions?: string[];
-  login: (payload: any) => string; // returns internal redirect path (or "/")
+  login: (payload: any) => string; // returns redirect path
   setSelectedApp: (app: AppInfo) => void;
   logout: () => void;
   loading: boolean;
+
+  // ✅ RBAC helpers
+  hasRole: (role: string) => boolean;
+  hasAnyRole: (roles: string[]) => boolean;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -50,13 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setSelectedAppState(undefined);
     setAppsState(undefined);
     setPermissionsState(undefined);
-    localStorage.removeItem("userInfo");
-    localStorage.removeItem("selectedApp");
-    localStorage.removeItem("apps");
-    localStorage.removeItem("permissions");
-    localStorage.removeItem("loginTime");
-    localStorage.removeItem("lastActivity");
-    // Let the router/page decide where to go if needed, avoid hard reloads
+    localStorage.clear();
   };
 
   const normalizeAuthPayload = (payload: any) => {
@@ -76,10 +76,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             domainUrl: d.app.domainUrl,
           }
         : undefined;
-      const permissions: string[] | undefined = d.permissions;
-      const apps: AppInfo[] | undefined = d.apps;
-      const redirect: string | undefined = d.redirect;
-      return { user, selectedApp: app, permissions, apps, redirect };
+      return {
+        user,
+        selectedApp: app,
+        permissions: d.permissions,
+        apps: d.apps,
+        redirect: d.redirect,
+      };
     }
     if (payload?.user) {
       const user: UserInfo = {
@@ -115,7 +118,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return null;
   };
 
-  // Best-practice login: persist first, return redirect path; do not navigate here
   const login = (raw: any): string => {
     const { user, selectedApp, apps, permissions, redirect } =
       normalizeAuthPayload(raw);
@@ -136,13 +138,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const now = Date.now();
     localStorage.setItem("loginTime", now.toString());
     localStorage.setItem("lastActivity", now.toString());
-    // Prefer backend-provided redirect if present, else permission-derived
     return redirect && redirect.startsWith("/")
       ? redirect
       : decideRedirect(permissions) || "/";
   };
 
-  // Restore session on mount with timing checks
+  // Restore session
   useEffect(() => {
     const storedUser = localStorage.getItem("userInfo");
     const storedApp = localStorage.getItem("selectedApp");
@@ -191,6 +192,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [user]);
 
+  // ✅ RBAC helpers
+  const hasRole = (role: string) => selectedApp?.role === role;
+  const hasAnyRole = (roles: string[]) =>
+    roles.includes(selectedApp?.role || "");
+  const hasPermission = (perm: string) => !!permissions?.includes(perm);
+  const hasAnyPermission = (perms: string[]) =>
+    !!permissions?.some((p) => perms.includes(p));
+
   return (
     <AuthContext.Provider
       value={{
@@ -206,6 +215,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         },
         logout,
         loading,
+        hasRole,
+        hasAnyRole,
+        hasPermission,
+        hasAnyPermission,
       }}
     >
       {children}
