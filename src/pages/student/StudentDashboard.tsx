@@ -52,7 +52,10 @@ const StudentDashboard = () => {
           </div>
 
           {/* Aside: Newsletter, Banner, and Other Promo Cards */}
-          <aside className="flex flex-col space-y-4 sm:space-y-6 lg:space-y-8">
+          <aside 
+            className="flex flex-col space-y-4 sm:space-y-6 lg:space-y-8 h-full"
+            style={{ height: pieHeight ? `${pieHeight}px` : 'auto' }}
+          >
             {/* Newsletter */}
             <a
               onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -61,7 +64,7 @@ const StudentDashboard = () => {
               }}
               target="_blank"
               rel="noopener noreferrer"
-              className="block cursor-pointer"
+              className="block cursor-pointer lg:flex-1"
             >
               <PromoCardSmall
                 imageUrl="https://img.freepik.com/free-vector/newsletter-concept-illustration_114360-1038.jpg"
@@ -69,11 +72,11 @@ const StudentDashboard = () => {
                 subtitle="Get the latest updates on study abroad opportunities, German education system insights, scholarships, and tips to make your journey smoother."
                 buttonText="Subscribe Now"
                 minHeight="min-h-[320px]"
-                className="w-full"
+                className="w-full h-full"
               />
             </a>
             {/* Promotional Banner */}
-            <div className="min-h-[320px]">
+            <div className="min-h-[320px] lg:flex-1">
               <PromotionalBanner className="w-full h-full" />
             </div>
             {/* Other Promo Cards */}
@@ -81,30 +84,30 @@ const StudentDashboard = () => {
               href="https://grade.globalmindsgermany.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="block"
+              className="block lg:flex-1"
             >
               <PromoCardSmall
                 imageUrl="https://img.freepik.com/free-photo/calculator-colorful-paper-clips_23-2148475323.jpg"
                 title="📊 German Grade Calculator"
                 subtitle="Convert your grades to the German grading system."
                 buttonText="Try Now"
-                minHeight="min-h-[150px] sm:min-h-[280px]"
-                className="w-full"
+                minHeight="min-h-[320px]"
+                className="w-full h-full"
               />
             </a>
             <a
               href="https://calculator.globalmindsindia.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="block"
+              className="block lg:flex-1"
             >
               <PromoCardSmall
                 imageUrl="https://png.pngtree.com/thumb_back/fh260/back_our/20190620/ourmid/pngtree-vector-school-bag-calculator-cyan-cartoon-banner-image_166801.jpg"
                 title="💰 Study Cost Calculator"
                 subtitle="Estimate your living and tuition costs in Germany."
                 buttonText="Calculate Now"
-                minHeight="min-h-[150px] sm:min-h-[280px]" // Reduced height for calculator
-                className="w-full"
+                minHeight="min-h-[320px]" // Reduced height for calculator
+                className="w-full h-full"
               />
             </a>
           </aside>
