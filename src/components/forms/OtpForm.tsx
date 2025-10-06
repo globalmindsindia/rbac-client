@@ -66,6 +66,7 @@ const OtpForm: React.FC<OtpFormProps> = ({ email }) => {
     try {
       // Step 1: Call backend verifyOtp (which now also logs in)
       const verifyData = await authService.verifyOtp(email, otp);
+      // console.log(verifyData);
 
       if (verifyData.success) {
         toast({
@@ -74,11 +75,8 @@ const OtpForm: React.FC<OtpFormProps> = ({ email }) => {
           variant: "default",
         });
 
-        // Save user & token in context
-        login(verifyData);
-
-        // Redirect user
-        navigate(verifyData.redirect || "/");
+        const path = login(verifyData);
+        navigate(path || "/", { replace: true });
       } else {
         toast({
           title: "Login failed",
