@@ -21,6 +21,7 @@ import {
   PencilRuler,
   FolderCog,
   Database,
+  Newspaper,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -100,6 +101,12 @@ export const menuConfig: MenuSection[] = [
         url: "/admin/sop-generator",
         icon: PencilRuler,
         roles: ["Super Admin", "SOP_ADMIN"],
+      },
+      {
+        title: "Newsletter Management",
+        url: "/admin/newsletter-management",
+        icon: Newspaper,
+        roles: ["Super Admin"],
       },
       {
         title: "Dashboard",
