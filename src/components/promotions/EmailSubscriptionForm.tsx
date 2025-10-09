@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react"; // Import checkmark icon
+import { Check } from "lucide-react";
+import { newsletterService } from "@/services/newsletterService"; // Import newsletterService
 
 interface EmailSubscriptionFormProps {
   onClose: () => void;
@@ -33,32 +34,25 @@ const EmailSubscriptionForm: React.FC<EmailSubscriptionFormProps> = ({ onClose }
     }
 
     try {
-      // End-to-end API call (replace with your actual API endpoint)
-      const response = await fetch("https://your-api-endpoint.com/subscribe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Subscription failed. Please try again.");
-      }
-
+      // Directly use the newsletterService API
+      await newsletterService.subscribe(email, "webform"); // Source can be modified as needed for tracking
       // On success
       setMessage("Thank you for subscribing!");
       setEmail("");
       setTimeout(onClose, 2000); // Close after 2 seconds
     } catch (err: any) {
-      setError(err.message || "An error occurred. Please try again later.");
+      // err may be AxiosError or generic
+      const apiError =
+        err?.response?.data?.error ||
+        err?.message ||
+        "An error occurred. Please try again later.";
+      setError(apiError);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all duration-300 ease-in-out hover:shadow-3xl">
-        {/* Decorative Background Element */}
         <div className="absolute -top-10 -left-10 opacity-10">
           <svg width="100" height="100" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12 7C9.24 7 7 9.24 7 12C7 14.76 9.24 17 12 17C14.76 17 17 14.76 17 12C17 9.24 14.76 7 12 7ZM12 15C10.34 15 9 13.66 9 12C9 10.34 10.34 9 12 9C13.66 9 15 10.34 15 12C15 13.66 13.66 15 12 15Z" fill="#4CAF50"/>

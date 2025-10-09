@@ -268,35 +268,51 @@ export default function ServicesPieChart({
   const iconOffset = 8 * scale;
   const offsetDist = 4 * scale;
 
-  // Tooltip using foreignObject for pixel-perfect placement
-  const svgTooltip = (ray: { x: number; y: number }, stepName: string) => (
-    <foreignObject
-      x={ray.x - 60}
-      y={ray.y - 36}
-      width={120}
-      height={36}
-      style={{ pointerEvents: "none" }}
-    >
-      <div
-        style={{
-          width: 120,
-          height: 32,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "rgba(0,0,0,0.90)",
-          color: "#fff",
-          borderRadius: 6,
-          fontSize: 14,
-          fontWeight: 500,
-          boxShadow: "0 4px 14px rgba(0,0,0,0.10)",
-          userSelect: "none",
-        }}
+  // Updated tooltip: placed outside number circle, never overlaps
+  const svgTooltip = (
+    ray: { x: number; y: number },
+    stepName: string,
+    rayAngle: number
+  ) => {
+    const tooltipWidth = 120;
+    const tooltipHeight = 36;
+    const safeRadius = numberRadius + 22 * scale; // Number circle + padding
+    const radians = ((rayAngle - 90) * Math.PI) / 180;
+    const tooltipPos = {
+      x: center + safeRadius * Math.cos(radians) - tooltipWidth / 2,
+      y: center + safeRadius * Math.sin(radians) - tooltipHeight / 2,
+    };
+    return (
+      <foreignObject
+        x={tooltipPos.x}
+        y={tooltipPos.y}
+        width={tooltipWidth}
+        height={tooltipHeight}
+        style={{ pointerEvents: "none", zIndex: 10 }}
       >
-        {stepName}
-      </div>
-    </foreignObject>
-  );
+        <div
+          style={{
+            width: tooltipWidth,
+            height: tooltipHeight - 4,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.90)",
+            color: "#fff",
+            borderRadius: 6,
+            fontSize: 14,
+            fontWeight: 500,
+            boxShadow: "0 4px 14px rgba(0,0,0,0.10)",
+            userSelect: "none",
+            padding: "2px 8px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {stepName}
+        </div>
+      </foreignObject>
+    );
+  };
 
   const getStepStatusColor = (progress: number) => {
     if (progress === 100) return "#22c55e";
@@ -371,115 +387,115 @@ export default function ServicesPieChart({
             </defs>
 
             {/* Pie slices */}
-{slicesWithAngles.map((service) => {
-  const slicePath = createSlicePath(
-    center,
-    center,
-    innerRadius,
-    outerRadius,
-    service.startAngle,
-    service.endAngle
-  );
+            {slicesWithAngles.map((service) => {
+              const slicePath = createSlicePath(
+                center,
+                center,
+                innerRadius,
+                outerRadius,
+                service.startAngle,
+                service.endAngle
+              );
 
-  // Slightly push label position outward for better spacing
-  const labelPos = polarToCartesian(center, center, chartRadius + 10 * scale, service.midAngle);
+              // Slightly push label position outward for better spacing
+              const labelPos = polarToCartesian(center, center, chartRadius + 10 * scale, service.midAngle);
 
-  const useAbbr = dimensions.width < 640;
-  const displayName = useAbbr ? abbrMap[service.name] || service.name : service.name;
+              const useAbbr = dimensions.width < 640;
+              const displayName = useAbbr ? abbrMap[service.name] || service.name : service.name;
 
-  // Wrap long names into two lines intelligently
-  let words = displayName.split(" ");
-  let lines = [];
-  if (displayName.length > 14 && words.length > 1) {
-    const mid = Math.ceil(words.length / 2);
-    lines = [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
-  } else {
-    lines = [displayName];
-  }
+              // Wrap long names into two lines intelligently
+              let words = displayName.split(" ");
+              let lines = [];
+              if (displayName.length > 14 && words.length > 1) {
+                const mid = Math.ceil(words.length / 2);
+                lines = [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+              } else {
+                lines = [displayName];
+              }
 
-  const maxWordLen = Math.max(...lines.map((w) => w.length), 1);
+              const maxWordLen = Math.max(...lines.map((w) => w.length), 1);
 
-  // Keep font readable while ensuring no overlap
-  const baseFontSize = 16 * scale;
-  const fontSizeNum =
-    lines.length > 1
-      ? Math.max(10 * scale, baseFontSize - maxWordLen * 0.2)
-      : Math.max(12 * scale, baseFontSize - maxWordLen * 0.15);
+              // Keep font readable while ensuring no overlap
+              const baseFontSize = 16 * scale;
+              const fontSizeNum =
+                lines.length > 1
+                  ? Math.max(10 * scale, baseFontSize - maxWordLen * 0.2)
+                  : Math.max(12 * scale, baseFontSize - maxWordLen * 0.15);
 
-  const lineHeight = fontSizeNum * 1.25;
-  const n = lines.length;
-  const firstDy = -(((n - 1) * lineHeight) / 2);
-  const iconFontSizeNum = 18 * scale;
-  const spacing = 3 * scale;
-  const firstCenter = labelPos.y + firstDy;
-  const iconY = firstCenter - fontSizeNum / 2 - spacing - iconFontSizeNum / 2;
+              const lineHeight = fontSizeNum * 1.25;
+              const n = lines.length;
+              const firstDy = -(((n - 1) * lineHeight) / 2);
+              const iconFontSizeNum = 18 * scale;
+              const spacing = 3 * scale;
+              const firstCenter = labelPos.y + firstDy;
+              const iconY = firstCenter - fontSizeNum / 2 - spacing - iconFontSizeNum / 2;
 
-  return (
-    <g
-      key={service.name}
-      onMouseEnter={() => handleServiceSliceEnter(service.name)}
-      onMouseLeave={handleServiceSliceLeave}
-      onClick={() => handleServiceClick(service)}
-      className="cursor-pointer"
-      tabIndex={0}
-    >
-      {/* Slice Shape */}
-      <path
-        d={slicePath}
-        fill={
-          hoveredService === service.name && !service.purchased
-            ? "#6366f1"
-            : service.color
-        }
-        stroke="white"
-        strokeWidth={3 * scale}
-        style={{
-          filter:
-            hoveredService === service.name
-              ? "brightness(1.1) drop-shadow(0 0 5px rgba(0,0,0,0.2))"
-              : !service.purchased
-              ? "brightness(0.7)"
-              : "none",
-          opacity: !service.purchased ? 0.6 : 1,
-          transition: "fill 0.2s ease",
-        }}
-      />
+              return (
+                <g
+                  key={service.name}
+                  onMouseEnter={() => handleServiceSliceEnter(service.name)}
+                  onMouseLeave={handleServiceSliceLeave}
+                  onClick={() => handleServiceClick(service)}
+                  className="cursor-pointer"
+                  tabIndex={0}
+                >
+                  {/* Slice Shape */}
+                  <path
+                    d={slicePath}
+                    fill={
+                      hoveredService === service.name && !service.purchased
+                        ? "#6366f1"
+                        : service.color
+                    }
+                    stroke="white"
+                    strokeWidth={3 * scale}
+                    style={{
+                      filter:
+                        hoveredService === service.name
+                          ? "brightness(1.1) drop-shadow(0 0 5px rgba(0,0,0,0.2))"
+                          : !service.purchased
+                          ? "brightness(0.7)"
+                          : "none",
+                      opacity: !service.purchased ? 0.6 : 1,
+                      transition: "fill 0.2s ease",
+                    }}
+                  />
 
-      {/* Slice Icon */}
-      <text
-        x={labelPos.x}
-        y={iconY}
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize={`${iconFontSizeNum}px`}
-        style={{ filter: "url(#textGlow)" }}
-      >
-        {service.icon}
-      </text>
+                  {/* Slice Icon */}
+                  <text
+                    x={labelPos.x}
+                    y={iconY}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={`${iconFontSizeNum}px`}
+                    style={{ filter: "url(#textGlow)" }}
+                  >
+                    {service.icon}
+                  </text>
 
-      {/* Slice Text */}
-      <text
-        x={labelPos.x}
-        y={labelPos.y}
-        textAnchor="middle"
-        dominantBaseline="central"
-        className="text-white"
-        fontSize={`${fontSizeNum}px`}
-        style={{
-          filter: "url(#textGlow)",
-          fontWeight: "500",
-          userSelect: "none",
-        }}
-      >
-        {lines.map((w, i) => (
-          <tspan key={i} x={labelPos.x} dy={i === 0 ? firstDy : lineHeight}>
-            {w}
-          </tspan>
-        ))}
-      </text>
-    </g>
-  );
-})}
+                  {/* Slice Text */}
+                  <text
+                    x={labelPos.x}
+                    y={labelPos.y}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className="text-white"
+                    fontSize={`${fontSizeNum}px`}
+                    style={{
+                      filter: "url(#textGlow)",
+                      fontWeight: "500",
+                      userSelect: "none",
+                    }}
+                  >
+                    {lines.map((w, i) => (
+                      <tspan key={i} x={labelPos.x} dy={i === 0 ? firstDy : lineHeight}>
+                        {w}
+                      </tspan>
+                    ))}
+                  </text>
+                </g>
+              );
+            })}
 
             {/* Render sun rays */}
             {slicesWithAngles.map(
@@ -496,8 +512,7 @@ export default function ServicesPieChart({
                           const startR = outerRadius + startOffset;
                           const rayStart = polarToCartesian(center, center, startR, rayAngle);
                           const extensionLength =
-                            sunRayMinLength +
-                            ((sunRayMaxLength - sunRayMinLength) * step.progress) / 100;
+                            sunRayMinLength + ((sunRayMaxLength - sunRayMinLength) * step.progress) / 100;
                           const endR = startR + extensionLength;
                           const rayEnd = polarToCartesian(center, center, endR, rayAngle);
 
@@ -579,7 +594,7 @@ export default function ServicesPieChart({
                                   {getStepIcon(step.progress)}
                                 </text>
                               </g>
-                              {isRayHovered && svgTooltip(iconPos, step.name)}
+                              {isRayHovered && svgTooltip(rayEnd, step.name, rayAngle)}
                               <defs>
                                 <linearGradient
                                   id={`rayGradient-${s.name}-${idx}`}
