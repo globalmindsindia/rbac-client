@@ -9,6 +9,7 @@ import UserManagement from "@/pages/admin/UserManagement";
 import ResourceManagement from "@/pages/admin/ResourceManagement";
 import PermissionManagement from "@/pages/admin/PermissionManagement";
 import SopGenerator from "@/pages/admin/employee/SopGenerator";
+import NewsletterManagement from "@/pages/admin/NewsletterManagement";
 
 export const AdminRoutes = [
   {
@@ -88,6 +89,14 @@ export const AdminRoutes = [
     element: (
       <ProtectedRoute>
         <SopGenerator />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/admin/newsletter-management",
+    element: (
+      <ProtectedRoute>
+        <NewsletterManagement />
       </ProtectedRoute>
     ),
   },
