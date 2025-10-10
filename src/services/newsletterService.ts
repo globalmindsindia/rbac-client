@@ -117,4 +117,30 @@ export const newsletterService = {
     );
     return data;
   },
+
+  // Campaign attachments (using getApi instead of fetch)
+  async createCampaignWithAttachment(formData: FormData) {
+    const { data } = await getApi().post("/v1/newsletter/campaigns", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
+  async updateCampaignWithAttachment(id: string, formData: FormData) {
+    const { data } = await getApi().put(
+      `/v1/newsletter/campaigns/${id}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+    return data;
+  },
+
+  async removeAttachment(campaignId: string) {
+    const { data } = await getApi().delete(
+      `/v1/newsletter/campaigns/${campaignId}/attachment`
+    );
+    return data;
+  },
 };
