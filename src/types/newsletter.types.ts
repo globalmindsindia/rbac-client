@@ -12,6 +12,7 @@ export interface Campaign {
   recipientCount?: number;
   openRate?: number;
   clickRate?: number;
+  attachmentName?: string;
 }
 
 export interface Subscriber {
