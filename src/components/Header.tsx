@@ -24,7 +24,15 @@ const Header = () => {
       <div className="container mx-auto px-2 xs:px-3 sm:px-4 md:px-6 h-12 xs:h-14 sm:h-16 flex items-center justify-between">
         {/* Left side: StudentDashboardHeader */}
         <div className="flex flex-1 justify-start pl-0">
-          <StudentDashboardHeader studentName={user ? `${user.firstName} ${user.lastName}` : "Student"} />
+          <StudentDashboardHeader
+            studentName={
+              user
+                ? user.lastName
+                  ? `${user.firstName} ${user.lastName}`
+                  : user.firstName
+                : "Student"
+            }
+          />
         </div>
 
         {/* Logout Button */}
