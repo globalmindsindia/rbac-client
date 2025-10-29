@@ -21,13 +21,20 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "../ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ApplicationFormProps {
   mode: "add" | "edit";
-  initialData?: { name: string; domain_url: string; roles: string[] }; // Pre-fill data for edit mode
+  initialData?: any;
   roles: { id: string; name: string }[];
-  trigger: React.ReactNode; // Button or Icon
-  onSubmit: (data: { name: string; domain_url: string }) => Promise<void>;
+  trigger: React.ReactNode;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 const ApplicationForm = ({
@@ -37,16 +44,18 @@ const ApplicationForm = ({
   trigger,
   onSubmit,
 }: ApplicationFormProps) => {
-  const [open, setOpen] = useState(false); // control dialog state
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+
   const applicationForm = useForm({
     defaultValues: {
       name: "",
       domain_url: "",
       roles: [],
+      applicationType: "INTERNAL",
+      status: "ACTIVE",
     },
   });
-
-  const { toast } = useToast();
 
   // Pre-fill form in edit mode
   useEffect(() => {
@@ -66,7 +75,7 @@ const ApplicationForm = ({
             : "Application updated successfully",
       });
       applicationForm.reset();
-      setOpen(false); // ✅ close modal after success
+      setOpen(false);
     } catch (error) {
       toast({
         title: "Error",
@@ -89,7 +98,7 @@ const ApplicationForm = ({
           </DialogTitle>
           <DialogDescription>
             {mode === "add"
-              ? "Register a new application with its domain"
+              ? "Register a new application with its domain and type"
               : "Update the application details"}
           </DialogDescription>
         </DialogHeader>
@@ -127,6 +136,56 @@ const ApplicationForm = ({
               )}
             />
 
+            {/* Application Type */}
+            <FormField
+              control={applicationForm.control}
+              name="applicationType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Application Type</FormLabel>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="INTERNAL">Internal</SelectItem>
+                        <SelectItem value="CROSS_SELLING">
+                          Cross Selling
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {/* Status */}
+            <FormField
+              control={applicationForm.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="INACTIVE">Inactive</SelectItem>
+                        <SelectItem value="UNDER_CONSTRUCTION">
+                          Under Construction
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {/* Roles */}
             <FormField
               control={applicationForm.control}
               name="roles"
@@ -148,7 +207,7 @@ const ApplicationForm = ({
                               } else {
                                 field.onChange(
                                   field.value.filter(
-                                    (id: string) => id !== role.name
+                                    (r: string) => r !== role.name
                                   )
                                 );
                               }
@@ -159,7 +218,6 @@ const ApplicationForm = ({
                       ))}
                     </div>
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />

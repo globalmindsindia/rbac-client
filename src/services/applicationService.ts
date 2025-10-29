@@ -6,6 +6,14 @@ export const applicationService = {
     return data;
   },
 
+  async getCrossSellingApplications(email: string) {
+    const { data } = await getApi().get(
+      `/v1/admin/applications/cross-selling`,
+      { params: { email } }
+    );
+    return data;
+  },
+
   async upsertApplication(appData: any) {
     const { data } = await getApi().post(
       "/v1/admin/applications/upsert",

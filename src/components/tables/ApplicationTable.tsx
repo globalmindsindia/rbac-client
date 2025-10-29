@@ -12,6 +12,14 @@ const ApplicationTable = ({
   const columns = [
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Domain", selector: (row) => row.domain_url, sortable: true },
+    { name: "Type", selector: (row) => row.applicationType, sortable: true },
+    { name: "Status", selector: (row) => row.status, sortable: true },
+    {
+      name: "Activated On",
+      selector: (row) =>
+        row.activatedAt ? new Date(row.activatedAt).toLocaleDateString() : "-",
+      sortable: true,
+    },
     {
       name: "Roles",
       selector: (row) => row.roles?.length || 0,
@@ -26,7 +34,6 @@ const ApplicationTable = ({
       name: "Actions",
       cell: (row) => (
         <div className="flex gap-2">
-          {/* Edit button */}
           <ApplicationForm
             mode="edit"
             roles={roles}
@@ -43,7 +50,6 @@ const ApplicationTable = ({
             }
           />
 
-          {/* Delete button */}
           <Button
             variant="destructive"
             size="sm"
