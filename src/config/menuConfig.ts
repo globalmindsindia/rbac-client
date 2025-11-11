@@ -109,6 +109,13 @@ export const menuConfig: MenuSection[] = [
         roles: ["Super Admin"],
       },
       {
+        title: "Masters Course Management",
+        url: "/admin/masters-course-management",
+        icon: Newspaper,
+        roles: ["Super Admin"],
+      },
+
+      {
         title: "Dashboard",
         url: "/student/dashboard",
         icon: LayoutDashboard,

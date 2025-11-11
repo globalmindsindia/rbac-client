@@ -10,6 +10,7 @@ import ResourceManagement from "@/pages/admin/ResourceManagement";
 import PermissionManagement from "@/pages/admin/PermissionManagement";
 import SopGenerator from "@/pages/admin/employee/SopGenerator";
 import NewsletterManagement from "@/pages/admin/NewsletterManagement";
+import MastersCourseManagement from "@/pages/admin/MastersCourseManagement";
 
 export const AdminRoutes = [
   {
@@ -97,6 +98,14 @@ export const AdminRoutes = [
     element: (
       <ProtectedRoute>
         <NewsletterManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/admin/masters-course-management",
+    element: (
+      <ProtectedRoute>
+        <MastersCourseManagement />
       </ProtectedRoute>
     ),
   },
