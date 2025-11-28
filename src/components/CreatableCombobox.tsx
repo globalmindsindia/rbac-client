@@ -15,15 +15,20 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { ChevronsUpDown, Check, Plus } from "lucide-react";
+import { masterCourseService } from "@/services/mastersCourseService";
 
-// CreatableCombobox.tsx
 type Props = {
   value: string;
   onChange: (val: string) => void;
-  options: readonly string[]; // accept readonly too
+  options: readonly string[];
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  country?: string;
+  type?: "university" | "course";
+  onSearchChange?: (query: string) => void;
+  onLoadMore?: () => void; // 🆕 called when scrolled to bottom
+  loading?: boolean; // 🆕 show loading indicator
 };
 
 export default function CreatableCombobox({
@@ -33,9 +38,19 @@ export default function CreatableCombobox({
   placeholder = "Search or enter...",
   disabled,
   className,
+  country,
+  type,
+  onSearchChange,
+  onLoadMore, // 🆕 add this
+  loading, // 🆕 add this
 }: Props) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
+
+  // 🔁 Trigger search callback when user types
+  React.useEffect(() => {
+    if (onSearchChange) onSearchChange(query);
+  }, [query]);
 
   const normalized = React.useMemo(
     () => options.map((o) => ({ label: o, value: o })),
@@ -50,16 +65,34 @@ export default function CreatableCombobox({
 
   const selected = value || "";
 
-  function handleSelect(next: string) {
-    onChange(next);
-    setOpen(false);
-    setQuery("");
-  }
-
-  function handleCreate() {
+  async function handleCreate() {
     const custom = query.trim();
     if (!custom) return;
     onChange(custom);
+    setOpen(false);
+    setQuery("");
+
+    // 🟢 Automatically upsert to backend
+    if (country && type) {
+      try {
+        if (type === "university") {
+          await masterCourseService.upsert([
+            { country, universities: [custom], courses: [] },
+          ]);
+        } else if (type === "course") {
+          await masterCourseService.upsert([
+            { country, universities: [], courses: [custom] },
+          ]);
+        }
+        console.log(`✅ Created new ${type}:`, custom);
+      } catch (err) {
+        console.error(`❌ Failed to create ${type}:`, err);
+      }
+    }
+  }
+
+  function handleSelect(next: string) {
+    onChange(next);
     setOpen(false);
     setQuery("");
   }
@@ -81,6 +114,7 @@ export default function CreatableCombobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 opacity-60" />
         </Button>
       </PopoverTrigger>
+
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
           <CommandInput
@@ -89,7 +123,15 @@ export default function CreatableCombobox({
             onValueChange={setQuery}
             className="h-9"
           />
-          <CommandList className="max-h-64">
+          <CommandList
+            className="max-h-64 overflow-y-auto"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+                if (onLoadMore) onLoadMore(); // 🟢 trigger next 25
+              }
+            }}
+          >
             {filtered.length === 0 ? (
               <>
                 <CommandEmpty>No results found</CommandEmpty>
@@ -120,6 +162,7 @@ export default function CreatableCombobox({
                     </div>
                   </CommandItem>
                 ))}
+
                 {!!query.trim() &&
                   !normalized.some(
                     (o) => o.label.toLowerCase() === query.trim().toLowerCase()
@@ -130,6 +173,12 @@ export default function CreatableCombobox({
                     </CommandItem>
                   )}
               </CommandGroup>
+            )}
+
+            {loading && (
+              <div className="p-2 text-center text-sm text-gray-400">
+                Loading more...
+              </div>
             )}
           </CommandList>
         </Command>

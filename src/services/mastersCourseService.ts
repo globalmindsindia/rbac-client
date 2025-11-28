@@ -1,41 +1,53 @@
 // src/services/mastersCourseService.ts
-import { getApi } from "@/api/api";
+import axios from "axios";
+
+// const BASE_URL = "https://rbacapi.globalmindsindia.in";
+const BASE_URL = "http://localhost:5080";
 
 export const masterCourseService = {
-  async getAll() {
-    const res = await getApi().get("/v1/masters-courses");
-    return res.data?.data || []; // ✅ unwrap the array
-  },
-
-  async getById(id: string) {
-    const res = await getApi().get(`/v1/masters-courses/${id}`);
-    return res.data?.data || null; // ✅ unwrap the object
-  },
-
+  /**
+   * 🟢 Bulk create/update (used by "Create" button in combobox)
+   */
   async upsert(payload: any) {
-    const res = await getApi().post("/v1/masters-courses", payload);
-    return res.data; // could be { success, message }
-  },
-
-  async delete(id: string) {
-    const res = await getApi().delete(`/v1/masters-courses/${id}`);
+    const res = await axios.post(`${BASE_URL}/v1/masters-courses`, payload);
     return res.data;
   },
 
-  async downloadTemplate() {
-    const api = getApi();
-    const res = await api.get("/v1/masters-courses/template/download", {
-      responseType: "blob",
+  /**
+   * 🟢 Get countries with pagination and optional search
+   */
+  async getPaginated(page = 1, limit = 20, search = "") {
+    const res = await axios.get(`${BASE_URL}/v1/masters-courses/paginated`, {
+      params: { page, limit, search },
     });
     return res.data;
   },
 
-  async importCsv(formData: FormData, onUploadProgress?: (e: any) => void) {
-    const api = getApi();
-    const res = await api.post("/v1/masters-courses/import", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      onUploadProgress,
-    });
+  /**
+   * 🟢 Get universities by country (supports pagination & search)
+   */
+  async getUniversities(country: string, page = 1, limit = 25, search = "") {
+    const res = await axios.get(
+      `${BASE_URL}/v1/masters-courses/${encodeURIComponent(
+        country
+      )}/universities`,
+      {
+        params: { page, limit, search },
+      }
+    );
+    return res.data;
+  },
+
+  /**
+   * 🟢 Get courses by country (supports pagination & search)
+   */
+  async getCourses(country: string, page = 1, limit = 25, search = "") {
+    const res = await axios.get(
+      `${BASE_URL}/v1/masters-courses/${encodeURIComponent(country)}/courses`,
+      {
+        params: { page, limit, search },
+      }
+    );
     return res.data;
   },
 };

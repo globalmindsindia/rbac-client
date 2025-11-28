@@ -1,6 +1,17 @@
 import { getApi } from "@/api/api";
 
 export const leadService = {
+  createLeads: async (payload: any) => {
+    try {
+      const response = await getApi().post(`/v1/leads/`, payload);
+      return response.data;
+    } catch (error: any) {
+      console.error("Create leads error:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to create leads"
+      );
+    }
+  },
   async getLeads(params?: { startDate?: string; endDate?: string }) {
     const { data } = await getApi().get("/v1/leads", { params });
     return data;
