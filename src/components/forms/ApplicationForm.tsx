@@ -58,12 +58,12 @@ const ApplicationForm = ({
     },
   });
 
-  // Pre-fill form in edit mode
+  // Prefill when editing
   useEffect(() => {
     if (mode === "edit" && initialData) {
       applicationForm.reset({
         ...initialData,
-        oldDomainUrl: initialData.domain_url, // keep previous domain
+        oldDomainUrl: initialData.domain_url, // keep original domain url
       });
     }
   }, [mode, initialData, applicationForm]);
@@ -71,6 +71,7 @@ const ApplicationForm = ({
   const handleFormSubmit = async (data: any) => {
     try {
       await onSubmit(data);
+
       toast({
         title: "Success",
         description:
@@ -78,15 +79,13 @@ const ApplicationForm = ({
             ? "Application created successfully"
             : "Application updated successfully",
       });
+
       applicationForm.reset();
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description:
-          mode === "add"
-            ? "Failed to create application"
-            : "Failed to update application",
+        description: error?.message || "Failed to save application",
         variant: "destructive",
       });
     }
@@ -95,6 +94,7 @@ const ApplicationForm = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
+
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
@@ -102,8 +102,8 @@ const ApplicationForm = ({
           </DialogTitle>
           <DialogDescription>
             {mode === "add"
-              ? "Register a new application with its domain and type"
-              : "Update the application details"}
+              ? "Register a new application with its details"
+              : "Update application details"}
           </DialogDescription>
         </DialogHeader>
 
@@ -112,6 +112,13 @@ const ApplicationForm = ({
             onSubmit={applicationForm.handleSubmit(handleFormSubmit)}
             className="space-y-4"
           >
+            {/* Hidden old domain URL */}
+            <input
+              type="hidden"
+              {...applicationForm.register("oldDomainUrl")}
+            />
+
+            {/* Name */}
             <FormField
               control={applicationForm.control}
               name="name"
@@ -126,6 +133,7 @@ const ApplicationForm = ({
               )}
             />
 
+            {/* Domain URL */}
             <FormField
               control={applicationForm.control}
               name="domain_url"
@@ -147,19 +155,17 @@ const ApplicationForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Application Type</FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="INTERNAL">Internal</SelectItem>
-                        <SelectItem value="CROSS_SELLING">
-                          Cross Selling
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="INTERNAL">Internal</SelectItem>
+                      <SelectItem value="CROSS_SELLING">
+                        Cross Selling
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormItem>
               )}
             />
@@ -171,20 +177,18 @@ const ApplicationForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="INACTIVE">Inactive</SelectItem>
-                        <SelectItem value="UNDER_CONSTRUCTION">
-                          Under Construction
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Active</SelectItem>
+                      <SelectItem value="INACTIVE">Inactive</SelectItem>
+                      <SelectItem value="UNDER_CONSTRUCTION">
+                        Under Construction
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormItem>
               )}
             />
@@ -196,32 +200,30 @@ const ApplicationForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assign Roles</FormLabel>
-                  <FormControl>
-                    <div className="space-y-2">
-                      {roles.map((role) => (
-                        <label
-                          key={role.id}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            checked={field.value.includes(role.name)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                field.onChange([...field.value, role.name]);
-                              } else {
-                                field.onChange(
-                                  field.value.filter(
-                                    (r: string) => r !== role.name
-                                  )
-                                );
-                              }
-                            }}
-                          />
-                          <span>{role.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </FormControl>
+                  <div className="space-y-2">
+                    {roles.map((role) => (
+                      <label
+                        key={role.id}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          checked={field.value.includes(role.name)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              field.onChange([...field.value, role.name]);
+                            } else {
+                              field.onChange(
+                                field.value.filter(
+                                  (r: string) => r !== role.name
+                                )
+                              );
+                            }
+                          }}
+                        />
+                        <span>{role.name}</span>
+                      </label>
+                    ))}
+                  </div>
                 </FormItem>
               )}
             />
