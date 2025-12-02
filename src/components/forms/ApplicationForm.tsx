@@ -51,6 +51,7 @@ const ApplicationForm = ({
     defaultValues: {
       name: "",
       domain_url: "",
+      oldDomainUrl: "",
       roles: [],
       applicationType: "INTERNAL",
       status: "ACTIVE",
@@ -60,7 +61,10 @@ const ApplicationForm = ({
   // Pre-fill form in edit mode
   useEffect(() => {
     if (mode === "edit" && initialData) {
-      applicationForm.reset(initialData);
+      applicationForm.reset({
+        ...initialData,
+        oldDomainUrl: initialData.domain_url, // keep previous domain
+      });
     }
   }, [mode, initialData, applicationForm]);
 
