@@ -20,12 +20,12 @@ const inputBase = [
 
 const ResetPasswordForm: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token"); // e.g., ?token=abc123
+  const token = searchParams.get("token");
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [isChecking, setIsChecking] = useState(true); // while verifying token
-  const [isValid, setIsValid] = useState(false); // token valid or not
+  const [isChecking, setIsChecking] = useState(true);
+  const [isValid, setIsValid] = useState(false);
 
   const [formData, setFormData] = useState({
     password: "",
@@ -39,34 +39,28 @@ const ResetPasswordForm: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // NEW: states for show/hide password
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   useEffect(() => {
-    // no token at all → mark invalid immediately
     if (!token) {
       setIsChecking(false);
       setIsValid(false);
       return;
     }
 
-    // verify async
     authService
       .verifyResetToken(token)
-      .then(() => {
-        setIsValid(true);
-      })
-      .catch(() => {
-        setIsValid(false);
-      })
-      .finally(() => {
-        setIsChecking(false);
-      });
+      .then(() => setIsValid(true))
+      .catch(() => setIsValid(false))
+      .finally(() => setIsChecking(false));
   }, [token]);
 
-  // While verifying token → show loader / spinner / blank
   if (isChecking) {
     return <p className="text-center">Validating reset link...</p>;
   }
 
-  // If invalid token → redirect once, no form flash
   if (!isValid) {
     navigate("/error", {
       state: {
@@ -134,7 +128,6 @@ const ResetPasswordForm: React.FC = () => {
     } catch (error: any) {
       console.error(error);
 
-      // Safely grab message from backend
       const message =
         error?.response?.data?.message ||
         "Please try again or request a new reset link.";
@@ -157,10 +150,7 @@ const ResetPasswordForm: React.FC = () => {
       }));
     };
 
-  // Don't render the form if there's no token
-  if (!token) {
-    return null; // Component will redirect in useEffect
-  }
+  if (!token) return null;
 
   /* ────────── UI ────────── */
   return (
@@ -177,32 +167,50 @@ const ResetPasswordForm: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* New password */}
-          <div>
+          <div className="relative">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               value={formData.password}
               onChange={handleInputChange("password")}
               placeholder="New password"
-              className={inputBase}
+              className={`${inputBase} pr-12`}
               autoComplete="new-password"
             />
+
+            {/* Eye Icon */}
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700 text-xl select-none"
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </span>
+
             {errors.password && (
               <p className="mt-1 text-sm text-red-500">{errors.password}</p>
             )}
           </div>
 
-          {/* Confirm password */}
-          <div>
+          {/* Confirm Password */}
+          <div className="relative">
             <input
-              type="password"
+              type={showConfirm ? "text" : "password"}
               name="confirm"
               value={formData.confirm}
               onChange={handleInputChange("confirm")}
               placeholder="Confirm new password"
-              className={inputBase}
+              className={`${inputBase} pr-12`}
               autoComplete="new-password"
             />
+
+            {/* Eye Icon */}
+            <span
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700 text-xl select-none"
+            >
+              {showConfirm ? "🙈" : "👁️"}
+            </span>
+
             {errors.confirm && (
               <p className="mt-1 text-sm text-red-500">{errors.confirm}</p>
             )}
@@ -212,19 +220,11 @@ const ResetPasswordForm: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`
-            w-full py-3
-            bg-gradient-to-r from-blue-600 to-green-500
-            hover:from-blue-700 hover:to-green-600
-            text-white font-semibold
-            rounded-lg
-            transition-all duration-200
-            shadow-md
-            focus:outline-none
-            focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-            text-lg
-            ${loading ? "opacity-60 cursor-not-allowed" : ""}
-          `}
+            className={`w-full py-3 bg-gradient-to-r from-blue-600 to-green-500
+              hover:from-blue-700 hover:to-green-600 text-white font-semibold
+              rounded-lg transition-all duration-200 shadow-md
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+              text-lg ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
           >
             {loading ? "Updating..." : "Reset password"}
           </button>

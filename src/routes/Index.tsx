@@ -7,7 +7,7 @@ import { StudentRoutes } from "./StudentRoutes";
 export const router = createBrowserRouter([
   {
     path: "/",
-    errorElement: <ErrorPage />, // 👈 catches errors for all children
+    // errorElement: <ErrorPage />, // 👈 catches errors for all children
     children: [...PublicRoutes, ...AdminRoutes, ...StudentRoutes],
   },
 ]);
