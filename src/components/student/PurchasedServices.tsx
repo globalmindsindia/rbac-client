@@ -70,30 +70,37 @@ const PurchasedServices = () => {
   const handleRedirect = async (service: Service) => {
     if (!user?.email) return;
 
+    const newTab = window.open("about:blank", "_blank");
+    if (!newTab) {
+      alert("Popup blocked! Please allow popups for this website.");
+      return;
+    }
+
     setServiceStates((prev) => ({
       ...prev,
       [service.id]: { ...prev[service.id], loading: true, error: "" },
     }));
 
     try {
-      const redirectUrl = await purchasedService.getRedirectUrl(
+      const rawUrl = await purchasedService.getRedirectUrl(
         user.email,
         service.id
       );
 
-      if (redirectUrl) {
-        window.open(redirectUrl, "_blank");
-      } else {
-        setServiceStates((prev) => ({
-          ...prev,
-          [service.id]: {
-            ...prev[service.id],
-            error: "Could not open this service.",
-          },
-        }));
-      }
+      const normalizeUrl = (url: string) => {
+        if (!url) return "";
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+          return url;
+        }
+        return `https://${url}`;
+      };
+
+      const finalUrl = normalizeUrl(rawUrl);
+      newTab.location.href = finalUrl;
     } catch (err) {
-      console.error("Redirect failed:", err);
+      console.error(err);
+      newTab.close();
+
       setServiceStates((prev) => ({
         ...prev,
         [service.id]: {
