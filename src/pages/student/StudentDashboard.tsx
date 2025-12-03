@@ -18,7 +18,8 @@ const StudentDashboard = () => {
 
   let activeTab: string = "overview";
   if (location.pathname === "/student/services") activeTab = "my-services";
-  if (location.pathname === "/student/available-services") activeTab = "other-services";
+  if (location.pathname === "/student/available-services")
+    activeTab = "other-services";
 
   const handleTabChange = (tab: string) => {
     if (tab === "my-services") navigate("/student/services");
@@ -105,8 +106,12 @@ const StudentDashboard = () => {
         </div>
 
         {/* Tabs Section */}
-        <div className="mt-4">
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        {/* <div className="mt-4">
+          <Tabs
+            value={activeTab}
+            onValueChange={handleTabChange}
+            className="w-full"
+          >
             <TabsContent value="overview" className="mt-2" />
             <TabsContent value="my-services" className="mt-2">
               <PurchasedServices />
@@ -117,13 +122,14 @@ const StudentDashboard = () => {
                   Other Services
                 </h1>
                 <p className="text-xs sm:text-sm md:text-base lg:text-lg text-muted-foreground mt-1">
-                  Explore and purchase new services to enhance your learning journey
+                  Explore and purchase new services to enhance your learning
+                  journey
                 </p>
               </div>
               <CrossSellSection />
             </TabsContent>
           </Tabs>
-        </div>
+        </div> */}
       </div>
       {showForm && <EmailSubscriptionForm onClose={() => setShowForm(false)} />}
     </DashboardLayout>
