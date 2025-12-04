@@ -1,8 +1,14 @@
 import { getApi } from "@/api/api";
 
 export const studentService = {
-  async getStudents() {
-    const { data } = await getApi().get("/v1/students");
+  async getStudents(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) {
+    const { data } = await getApi().get("/v1/students", {
+      params,
+    });
     return data;
   },
 

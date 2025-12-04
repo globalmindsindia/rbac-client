@@ -14,6 +14,11 @@ const StudentManagement = () => {
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
+
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -32,26 +37,25 @@ const StudentManagement = () => {
     try {
       setLoading(true);
 
-      const res = await studentService.getStudents();
-      setStudents(Array.isArray(res.data) ? res.data : []);
-    } catch (error) {
-      console.error("Error loading students:", error);
+      const res = await studentService.getStudents({ page, limit, search });
 
+      setStudents(Array.isArray(res.data) ? res.data : []);
+      setTotal(res.total || 0);
+    } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to load students",
       });
-
-      setStudents([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Load on page/search change
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [page, search]);
 
   // FORM INPUT HANDLER
   const handleChange = (e) =>
@@ -64,7 +68,7 @@ const StudentManagement = () => {
 
       const payload = {
         ...form,
-        appIds: selectedApps, // REQUIRED for backend
+        appIds: selectedApps,
       };
 
       const res = await studentService.createStudent(payload);
@@ -85,7 +89,6 @@ const StudentManagement = () => {
         });
       }
     } catch (err) {
-      console.error(err);
       toast({
         variant: "destructive",
         title: "Error",
@@ -128,7 +131,6 @@ const StudentManagement = () => {
 
     try {
       setLoading(true);
-
       await studentService.deleteStudent(id);
 
       toast({
@@ -148,7 +150,7 @@ const StudentManagement = () => {
     }
   };
 
-  // REINVITE
+  // REINVITE STUDENT
   const reinviteStudent = async (email) => {
     try {
       setLoading(true);
@@ -178,7 +180,7 @@ const StudentManagement = () => {
     const appsArray = Array.isArray(res.data) ? res.data : [];
 
     setAllApps(appsArray);
-    setSelectedApps(appsArray.map((a) => a.id)); // default: ALL apps
+    setSelectedApps(appsArray.map((a) => a.id));
 
     setForm({
       firstName: "",
@@ -215,6 +217,9 @@ const StudentManagement = () => {
     setOpenModal(true);
   };
 
+  // TOTAL PAGES
+  const totalPages = Math.ceil(total / limit);
+
   return (
     <DashboardLayout>
       <div className="flex-1 container mx-auto px-6 py-8 space-y-8">
@@ -224,55 +229,107 @@ const StudentManagement = () => {
           <Button onClick={openCreateModal}>+ Add Student</Button>
         </div>
 
+        {/* SEARCH */}
+        <input
+          type="text"
+          className="border p-2 rounded w-full max-w-sm mb-4"
+          placeholder="Search by name or email..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+        />
+
         {/* STUDENT TABLE */}
         <div className="bg-white rounded shadow p-6">
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="p-3 text-left">Name</th>
-                  <th className="p-3 text-left">Email</th>
-                  <th className="p-3 text-left">Phone</th>
-                  <th className="p-3 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((s) => (
-                  <tr key={s.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3">
-                      {s.firstName} {s.lastName}
-                    </td>
-                    <td className="p-3">{s.email}</td>
-                    <td className="p-3">{s.phoneNumber || "-"}</td>
-
-                    <td className="p-3 flex gap-2">
-                      <Button
-                        variant="secondary"
-                        onClick={() => openEditModal(s)}
-                      >
-                        Edit
-                      </Button>
-
-                      <Button
-                        variant="default"
-                        onClick={() => reinviteStudent(s.email)}
-                      >
-                        Reinvite
-                      </Button>
-
-                      <Button
-                        variant="destructive"
-                        onClick={() => deleteStudent(s.id)}
-                      >
-                        Delete
-                      </Button>
-                    </td>
+            <>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-3 text-left">Name</th>
+                    <th className="p-3 text-left">Email</th>
+                    <th className="p-3 text-left">Phone</th>
+                    <th className="p-3 text-left">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {students.map((s) => (
+                    <tr key={s.id} className="border-b hover:bg-gray-50">
+                      <td className="p-3">
+                        {s.firstName} {s.lastName}
+                      </td>
+                      <td className="p-3">{s.email}</td>
+                      <td className="p-3">{s.phoneNumber || "-"}</td>
+
+                      <td className="p-3 flex gap-2">
+                        <Button
+                          variant="secondary"
+                          onClick={() => openEditModal(s)}
+                        >
+                          Edit
+                        </Button>
+
+                        <Button
+                          variant="default"
+                          onClick={() => reinviteStudent(s.email)}
+                        >
+                          Reinvite
+                        </Button>
+
+                        <Button
+                          variant="destructive"
+                          onClick={() => deleteStudent(s.id)}
+                        >
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* PAGINATION */}
+              <div className="flex items-center justify-center mt-4 gap-2">
+                {/* Prev */}
+                <Button
+                  variant="secondary"
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  Prev
+                </Button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (num) => (
+                    <button
+                      key={num}
+                      onClick={() => setPage(num)}
+                      className={`px-3 py-1 rounded border ${
+                        page === num
+                          ? "bg-blue-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {num}
+                    </button>
+                  )
+                )}
+
+                {/* Next */}
+                <Button
+                  variant="secondary"
+                  disabled={page === totalPages}
+                  onClick={() => setPage(page + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </>
           )}
         </div>
 
