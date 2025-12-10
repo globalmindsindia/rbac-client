@@ -28,6 +28,27 @@ const ServicesPieChart: React.FC<{
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // EFFECT TO LOAD ZOHO SCRIPT (no design/JSX changes)
+  useEffect(() => {
+    const scriptId = "zoho-desk-feedback-widget";
+    if (document.getElementById(scriptId)) {
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src =
+      "https://desk.zoho.com/portal/api/feedbackwidget/1247602000000421003?orgId=907603622&displayType=popout";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      // Optional: remove on unmount if you don't want it global
+      // const existing = document.getElementById(scriptId);
+      // if (existing) existing.remove();
+    };
+  }, []);
+
   // Vibrant colors with good white text contrast (for purchased services only)
   const vibrantColors = [
     "#A5C9FF", // Sky Blue
