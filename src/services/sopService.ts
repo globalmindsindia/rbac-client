@@ -58,4 +58,16 @@ export const sopService = {
     const { data } = await api.post(`/api/v1/sop/verify-payment/${sop_id}`);
     return data as { message: string; success: boolean };
   },
+
+  async finalize(sop_id: number) {
+    const response = await api.post(
+      `/api/v1/sop/admin/finalize/${sop_id}`,
+      {}, // required to set application/json
+      {
+        responseType: "blob", // 👈 VERY IMPORTANT
+      }
+    );
+
+    return response.data; // this is the PDF blob
+  },
 };

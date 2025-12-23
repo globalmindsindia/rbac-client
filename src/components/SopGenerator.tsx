@@ -96,6 +96,7 @@ export default function SOPGenerator() {
 
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<Step>("university");
+  const [adminSopPdf, setAdminSopPdf] = useState<Blob | null>(null);
   const [formData, setFormData] = useState<AppFormData>({
     country: undefined,
     university: "",
@@ -107,6 +108,7 @@ export default function SOPGenerator() {
     preffered_length: "",
     specific_requirements: "",
   });
+  const [reviewFormData, setReviewFormData] = useState<FormData | null>(null);
   const [generatedSOP, setGeneratedSOP] = useState("");
   const [reviewCompleted, setReviewCompleted] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -284,20 +286,37 @@ export default function SOPGenerator() {
   }, [currentStep]);
 
   async function handleReviewConfirm() {
-    if (!sopId) {
+    if (!reviewFormData) {
       toast({
         title: "Error",
-        description: "SOP ID not found. Please restart the process.",
+        description: "Review data not found. Please restart.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      setReviewCompleted(true);
+      setLoading(true);
+
+      // Submit SOP
+      const { id } = await sopService.submitSop(reviewFormData);
+      setSopId(id);
+
+      // Admin finalize → returns PDF blob
+      const pdfBlob = await sopService.finalize(id);
+
+      // Store for later
+      setAdminSopPdf(pdfBlob);
+
+      // ✅ AUTO download
+      downloadPdf(pdfBlob);
+
+      // Go to result screen
       setCurrentStep("result");
     } catch (e) {
       handleError(e, toast);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -306,6 +325,7 @@ export default function SOPGenerator() {
   ) {
     try {
       setLoading(true);
+
       const fullAnswers = {
         ...answersFromQuestionnaire,
         "Preffered length": formData.preffered_length || "450",
@@ -330,20 +350,11 @@ export default function SOPGenerator() {
       fd.append("data", JSON.stringify(payload));
       if (formData.resume) fd.append("resume", formData.resume);
 
-      // Step 1: Submit SOP - but DON'T trigger quality check yet
-      const { id } = await sopService.submitSop(fd);
-      setSopId(id);
+      // ✅ Store FormData for review confirmation
+      setReviewFormData(fd);
 
-      // ✅ REMOVED: setPolling(true) and pollQualityCheck(id)
-      // Quality check will be triggered AFTER review is confirmed
-
-      // Move to review step instead of quality check
+      // ✅ Move to review step
       setCurrentStep("review");
-
-      // toast({
-      //   title: "Questionnaire Submitted! ✓",
-      //   description: "Please review your application before proceeding.",
-      // });
     } catch (e) {
       handleError(e, toast);
     } finally {
@@ -571,49 +582,16 @@ export default function SOPGenerator() {
     }
   };
 
-  const handleSubmitImprovements = async () => {
-    if (!sopId) return;
-
-    setLoading(true);
-
-    try {
-      const res = await sopService.improvementSuggestions(sopId, {
-        improvement_answers: improvementAnswers,
-      });
-
-      // Check if API response indicates success
-      if (res?.success || res?.message === "Final SOP generated successfully") {
-        // toast({
-        //   title: "Quality Check Complete! ✨",
-        //   description: "Moving to payment step...",
-        // });
-
-        // Move to next step (payment)
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }, 1500);
-      } else {
-        // Handle unsuccessful response
-        console.error("Failed to generate final SOP:", res);
-        toast({
-          title: "Error",
-          description:
-            res?.message || "Failed to process improvements. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } catch (err) {
-      // Handle any thrown errors
-      console.error("Error submitting improvements:", err);
-      toast({
-        title: "Error",
-        description: "An error occurred while processing improvements.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  function downloadPdf(blob: Blob, filename = "SOP_Draft.pdf") {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
 
   function ReviewApplication({
     formData,
@@ -1697,16 +1675,12 @@ export default function SOPGenerator() {
               )}
 
               {currentStep === "result" && (
-                <div className="space-y-4 sm:space-y-6 animate-fade-in max-w-2xl mx-auto p-4">
-                  <Card className="relative bg-gradient-to-br from-blue-50 via-white to-gray-100 dark:from-blue-950 dark:via-gray-900 dark:to-gray-950 rounded-2xl border border-blue-100 dark:border-gray-800 shadow-2xl overflow-hidden">
-                    {/* Floating animated bubble background */}
-                    <div className="absolute -top-8 -right-8 w-32 h-32 bg-blue-200/[0.20] blur-2xl rounded-full animate-pulse pointer-events-none z-0" />
-                    <div className="absolute -bottom-8 -left-8 w-20 h-20 bg-pink-200/[0.10] blur-xl rounded-full animate-blob pointer-events-none z-0" />
-                    {/* Animated checkmark circle */}
-                    <div className="flex justify-center mt-8 z-10 relative">
-                      <div className="flex items-center justify-center bg-gradient-to-br from-blue-400 via-green-300 to-green-500 w-20 h-20 rounded-full shadow-lg animate-bounce-slow">
+                <div className="space-y-6 max-w-2xl mx-auto p-4 animate-fade-in">
+                  <Card className="bg-gradient-to-br from-emerald-50 via-white to-slate-100 dark:from-emerald-950 dark:via-gray-900 dark:to-gray-950 rounded-2xl border shadow-2xl">
+                    <div className="flex justify-center mt-8">
+                      <div className="bg-gradient-to-br from-emerald-500 to-green-600 w-20 h-20 rounded-full flex items-center justify-center">
                         <svg
-                          className="w-12 h-12 text-white drop-shadow-lg"
+                          className="w-12 h-12 text-white"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth={4}
@@ -1720,67 +1694,49 @@ export default function SOPGenerator() {
                         </svg>
                       </div>
                     </div>
-                    <CardHeader className="text-center z-10 relative">
-                      <p className="text-xl sm:text-2xl md:text-3xl font-extrabold text-blue-900 dark:text-blue-100 mt-6">
-                        We’ve received your request
+
+                    <CardHeader className="text-center">
+                      <h2 className="text-2xl sm:text-3xl font-extrabold text-emerald-900 dark:text-emerald-100">
+                        SOP Generated Successfully
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Admin Generated Draft
                       </p>
                     </CardHeader>
-                    <CardContent className="space-y-4 sm:space-y-6 text-center z-10 relative">
-                      <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300">
-                        SOP is Being Tailored by Our Experts! Customizing it to
-                        match your profile and requirements.
+
+                    <CardContent className="space-y-6 text-center">
+                      <p className="text-base text-gray-700 dark:text-gray-300">
+                        The SOP draft has been generated and downloaded
+                        automatically. You can re-download it anytime using the
+                        button below.
                       </p>
-                      <p className="text-base sm:text-lg text-blue-700 dark:text-blue-200">
-                        You will receive your professionally written SOP via
-                        email within{" "}
-                        <span className="font-bold text-green-600 dark:text-green-400 animate-pulse">
-                          1–2 working days
-                        </span>
-                        .
-                      </p>
-                      <div className="flex flex-col items-center gap-4 sm:gap-6 mt-6">
-                        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-                          For any queries, feel free to contact us:
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-                          <Button
-                            variant="outline"
-                            className="flex items-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-950 transition-all w-full sm:w-auto py-2 font-medium border-blue-300 shadow hover:scale-105"
-                            asChild
-                          >
-                            <a href="mailto:connect@globalmindsindia@gmail.com">
-                              <Mail className="w-5 h-5" />
-                              Email Us @ connect@globalmindsindia@gmail.com
-                            </a>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="flex items-center gap-2 hover:bg-green-50 dark:hover:bg-green-950 transition-all w-full sm:w-auto py-2 font-medium border-green-300 shadow hover:scale-105"
-                            asChild
-                          >
-                            <a href="tel:+917353446655">
-                              <Phone className="w-5 h-5" />
-                              +91 7353446655
-                            </a>
-                          </Button>
-                        </div>
+
+                      {/* Manual Download */}
+                      <Button
+                        size="lg"
+                        className="bg-gradient-to-r from-emerald-600 to-green-500 text-white font-bold shadow-xl hover:scale-105"
+                        disabled={!adminSopPdf}
+                        onClick={() => adminSopPdf && downloadPdf(adminSopPdf)}
+                      >
+                        ⬇ Download SOP (PDF)
+                      </Button>
+
+                      <div className="flex justify-center gap-4 pt-4">
+                        <Button
+                          variant="outline"
+                          onClick={() => setCurrentStep("dashboard")}
+                        >
+                          Back to Dashboard
+                        </Button>
                         <Button
                           variant="default"
-                          className="mt-4 sm:mt-6 w-full sm:w-auto px-8 bg-gradient-to-r from-blue-600 to-green-500 text-white font-bold shadow-xl hover:scale-105 transition-transform"
-                          onClick={() => (window.location.href = "/")}
+                          onClick={() => window.location.reload()}
                         >
-                          Home
+                          Generate Another SOP
                         </Button>
                       </div>
                     </CardContent>
                   </Card>
-                  {/* Custom keyframes for slow bounce and blob animation, can be added in your global CSS or Tailwind config */}
-                  <style>{`
-      @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-      .animate-bounce-slow { animation: bounce-slow 2.5s infinite; }
-      @keyframes blob { 0%,100% { transform: scale(1) translate(0,0);} 33% { transform: scale(1.1) translate(-8px, 8px);} 66% { transform: scale(0.9) translate(8px, -4px);} }
-      .animate-blob { animation: blob 6s infinite; }
-    `}</style>
                 </div>
               )}
 
