@@ -220,7 +220,7 @@ const PurchasedServices = () => {
                   ) : (
                     <>
                       <ExternalLink className="w-4 h-4 mr-2" />
-                      Access Service
+                      {(service.name === 'APS Application' || service.name === 'Visa') ? 'Upload' : 'Access Service'}
                     </>
                   )}
                 </Button>
