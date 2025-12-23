@@ -28,6 +28,27 @@ const ServicesPieChart: React.FC<{
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // EFFECT TO LOAD ZOHO SCRIPT (no design/JSX changes)
+  useEffect(() => {
+    const scriptId = "zoho-desk-feedback-widget";
+    if (document.getElementById(scriptId)) {
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src =
+      "https://desk.zoho.com/portal/api/feedbackwidget/1247602000000421003?orgId=907603622&displayType=popout";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      // Optional: remove on unmount if you don't want it global
+      // const existing = document.getElementById(scriptId);
+      // if (existing) existing.remove();
+    };
+  }, []);
+
   // Vibrant colors with good white text contrast (for purchased services only)
   const vibrantColors = [
     "#A5C9FF", // Sky Blue
@@ -501,6 +522,7 @@ const ServicesPieChart: React.FC<{
                     if (!service) return null;
 
                     if (service.purchased && !service.comingSoon) {
+                      const buttonText = (service.name === 'APS Application' || service.name === 'Visa') ? 'Upload' : '🚀 Open';
                       return (
                         <Button
                           className="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full shadow text-[0.7rem] sm:text-xs font-semibold whitespace-nowrap"
@@ -509,7 +531,7 @@ const ServicesPieChart: React.FC<{
                             handleServiceClick(service);
                           }}
                         >
-                          🚀 Open
+                          {buttonText}
                         </Button>
                       );
                     } else if (!service.purchased && !service.comingSoon) {
